@@ -1,6 +1,6 @@
 package com.schoolmanager.schoolmanager.repository;
 
-import br.pucpr.schoolmanager.model.Curso;
+import com.schoolmanager.schoolmanager.model.Curso;
 import java.io.*;
 import java.util.ArrayList;
 
