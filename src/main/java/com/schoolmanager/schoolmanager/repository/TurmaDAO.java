@@ -1,11 +1,12 @@
 package com.schoolmanager.schoolmanager.repository;
 
-import com.schoolmanager.schoolmanager.model.Curso;
+import com.schoolmanager.schoolmanager.model.Turma; // <-- Esta é a linha mágica que resolve todos os erros da sua imagem!
+
 import java.io.*;
 import java.util.ArrayList;
 
 public class TurmaDAO {
-    private final String ARQUIVO = "turmas.dat"; //
+    private final String ARQUIVO = "turmas.dat";
 
     public void salvarTodos(ArrayList<Turma> turmas) {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(ARQUIVO))) {
