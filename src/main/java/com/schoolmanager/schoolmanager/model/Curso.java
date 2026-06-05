@@ -1,11 +1,11 @@
-package br.pucpr.schoolmanager.model;
+package com.schoolmanager.schoolmanager.model;
 
 import java.io.Serializable;
 
 public class Curso implements Serializable {
-    private String nome; // [cite: 97]
-    private int duracaoSemestres; // [cite: 98]
-    private String coordenadorId; // [cite: 99]
+    private String nome;
+    private int duracaoSemestres;
+    private String coordenadorId;
 
     public Curso(String nome, int duracaoSemestres, String coordenadorId) {
         this.nome = nome;
