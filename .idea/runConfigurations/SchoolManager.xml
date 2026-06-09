@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="SchoolManager" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.schoolmanager.schoolmanager.Launcher" />
+    <option name="VM_PARAMETERS" value="--add-modules javafx.controls,javafx.fxml,javafx.graphics" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <module name="SchoolManager" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
