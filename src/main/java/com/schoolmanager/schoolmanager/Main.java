@@ -1,7 +1,13 @@
 package com.schoolmanager.schoolmanager;
 
+import com.schoolmanager.schoolmanager.view.AlunoView;
 import com.schoolmanager.schoolmanager.view.AvaliacaoView;
+import com.schoolmanager.schoolmanager.view.CursoView;
+import com.schoolmanager.schoolmanager.view.DisciplinaView;
 import com.schoolmanager.schoolmanager.view.FrequenciaView;
+import com.schoolmanager.schoolmanager.view.ProfessorView;
+import com.schoolmanager.schoolmanager.view.ResponsavelView;
+import com.schoolmanager.schoolmanager.view.TurmaView;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -33,19 +39,28 @@ public class Main extends Application {
 
         Button btnAlunos = criarBotaoMenu("1. Discentes");
         Button btnProfessores = criarBotaoMenu("2. Docentes");
-        Button btnCursos = criarBotaoMenu("3. Organização");
-        Button btnMatriculas = criarBotaoMenu("4. Alocação");
+        Button btnDisciplinas = criarBotaoMenu("3. Disciplinas");
+        Button btnResponsaveis = criarBotaoMenu("4. Responsáveis");
+        Button btnCursos = criarBotaoMenu("5. Cursos");
+        Button btnTurmas = criarBotaoMenu("6. Turmas");
 
-        Button btnAvaliacoes = criarBotaoMenu("5. Avaliações (Notas)");
-        Button btnFrequencias = criarBotaoMenu("5. Frequência (Chamada)");
+        Button btnAvaliacoes = criarBotaoMenu("7. Avaliações (Notas)");
+        Button btnFrequencias = criarBotaoMenu("8. Frequência (Chamada)");
 
+        btnAlunos.setOnAction(e -> painelPrincipal.setCenter(new AlunoView()));
+        btnProfessores.setOnAction(e -> painelPrincipal.setCenter(new ProfessorView()));
+        btnDisciplinas.setOnAction(e -> painelPrincipal.setCenter(new DisciplinaView()));
+        btnResponsaveis.setOnAction(e -> painelPrincipal.setCenter(new ResponsavelView()));
+        btnCursos.setOnAction(e -> painelPrincipal.setCenter(new CursoView().iniciarTela()));
+        btnTurmas.setOnAction(e -> painelPrincipal.setCenter(new TurmaView().iniciarTela()));
         btnAvaliacoes.setOnAction(e -> painelPrincipal.setCenter(new AvaliacaoView()));
         btnFrequencias.setOnAction(e -> painelPrincipal.setCenter(new FrequenciaView()));
 
         menuLateral.getChildren().addAll(
                 tituloMenu,
                 new Label(" "), // Espaçador
-                btnAlunos, btnProfessores, btnCursos, btnMatriculas,
+                btnAlunos, btnProfessores, btnDisciplinas, btnResponsaveis,
+                btnCursos, btnTurmas,
                 new Label(" "), // Espaçador
                 btnAvaliacoes, btnFrequencias
         );

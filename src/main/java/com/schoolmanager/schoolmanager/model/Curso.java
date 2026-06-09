@@ -3,6 +3,8 @@ package com.schoolmanager.schoolmanager.model;
 import java.io.Serializable;
 
 public class Curso implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String nome;
     private int duracaoSemestres;
     private String coordenadorId;
@@ -21,4 +23,13 @@ public class Curso implements Serializable {
 
     public String getCoordenadorId() { return coordenadorId; }
     public void setCoordenadorId(String coordenadorId) { this.coordenadorId = coordenadorId; }
+
+    @Override
+    public String toString() {
+        return "Curso{" +
+                "nome='" + nome + '\'' +
+                ", duracaoSemestres=" + duracaoSemestres +
+                ", coordenadorId='" + coordenadorId + '\'' +
+                '}';
+    }
 }

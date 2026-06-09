@@ -3,6 +3,8 @@ package com.schoolmanager.schoolmanager.model;
 import java.io.Serializable;
 
 public class Turma implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String codigo;
     private String semestre;
     private String disciplinaId;
@@ -13,12 +15,34 @@ public class Turma implements Serializable {
         this.disciplinaId = disciplinaId;
     }
 
-    public String getCodigo() { return codigo; }
-    public void setCodigo(String codigo) { this.codigo = codigo; }
+    public String getCodigo() {
+        return codigo;
+    }
 
-    public String getSemestre() { return semestre; }
-    public void setSemestre(String semestre) { this.semestre = semestre; }
+    public void setCodigo(String codigo) {
+        this.codigo = codigo;
+    }
 
-    public String getDisciplinaId() { return disciplinaId; }
-    public void setDisciplinaId(String disciplinaId) { this.disciplinaId = disciplinaId; }
+    public String getSemestre() {
+        return semestre;
+    }
+    public void setSemestre(String semestre) {
+        this.semestre = semestre;
+    }
+
+    public String getDisciplinaId() {
+        return disciplinaId;
+    }
+    public void setDisciplinaId(String disciplinaId) {
+        this.disciplinaId = disciplinaId;
+    }
+
+    @Override
+    public String toString() {
+        return "Turma{" +
+                "codigo='" + codigo + '\'' +
+                ", semestre='" + semestre + '\'' +
+                ", disciplinaId='" + disciplinaId + '\'' +
+                '}';
+    }
 }
