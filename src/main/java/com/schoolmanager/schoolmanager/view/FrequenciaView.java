@@ -34,7 +34,11 @@ public class FrequenciaView extends VBox {
         Button btnSalvar = new Button("Salvar");
         Button btnExcluir = new Button("Excluir");
 
-        HBox form = new HBox(10, new Label("Data:"), txtData, chkPresente, new Label("Matrícula:"), txtMatricula, btnSalvar, btnExcluir);
+        HBox form = new HBox(10,
+                new Label("Data:"), txtData,
+                chkPresente,
+                new Label("Matrícula:"), txtMatricula,
+                btnSalvar, btnExcluir);
 
         tabela = new TableView<>();
         tabela.setItems(obsFrequencia);
@@ -58,14 +62,19 @@ public class FrequenciaView extends VBox {
 
     private void adicionarFrequencia() {
         try {
-            String data = txtData.getText();
-            String matricula = txtMatricula.getText();
+            String data = txtData.getText().trim();
+            String matricula = txtMatricula.getText().trim();
             boolean presente = chkPresente.isSelected();
 
-            if (!data.matches("\\d{2}/\\d{2}/\\d{4}")) {
-                throw new Exception("Formato de data inválido! Use DD/MM/AAAA.");
+            if (data.isEmpty() || matricula.isEmpty()) {
+                mostrarAlerta("Validação", "Preencha todos os campos obrigatórios.");
+                return;
             }
-            if(matricula.isEmpty()) throw new Exception("Informe a matrícula.");
+
+            if (!data.matches("\\d{2}/\\d{2}/\\d{4}")) {
+                mostrarAlerta("Formatação", "A data deve seguir o padrão DD/MM/AAAA.");
+                return;
+            }
 
             Frequencia nova = new Frequencia(data, presente, matricula);
             listaMemoria.add(nova);
@@ -73,17 +82,28 @@ public class FrequenciaView extends VBox {
             dao.salvarDados(listaMemoria);
 
             txtData.clear(); txtMatricula.clear(); chkPresente.setSelected(false);
+
         } catch (Exception ex) {
-            System.err.println("Erro: " + ex.getMessage());
+            mostrarAlerta("Erro", ex.getMessage() != null ? ex.getMessage() : "Erro inesperado.");
         }
     }
 
     private void removerFrequencia() {
         Frequencia selecionada = tabela.getSelectionModel().getSelectedItem();
-        if (selecionada != null) {
-            listaMemoria.remove(selecionada);
-            obsFrequencia.remove(selecionada);
-            dao.salvarDados(listaMemoria);
+        if (selecionada == null) {
+            mostrarAlerta("Aviso", "Selecione um registro de frequência para excluir.");
+            return;
         }
+        listaMemoria.remove(selecionada);
+        obsFrequencia.remove(selecionada);
+        dao.salvarDados(listaMemoria);
+    }
+
+    private void mostrarAlerta(String titulo, String mensagem) {
+        Alert alerta = new Alert(Alert.AlertType.WARNING);
+        alerta.setTitle(titulo);
+        alerta.setHeaderText(null);
+        alerta.setContentText(mensagem);
+        alerta.showAndWait();
     }
 }

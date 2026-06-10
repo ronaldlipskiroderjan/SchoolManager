@@ -33,7 +33,11 @@ public class AvaliacaoView extends VBox {
         Button btnSalvar = new Button("Salvar");
         Button btnExcluir = new Button("Excluir");
 
-        HBox form = new HBox(10, new Label("Nota:"), txtNota, new Label("Tipo:"), txtTipo, new Label("Matrícula:"), txtMatricula, btnSalvar, btnExcluir);
+        HBox form = new HBox(10,
+                new Label("Nota:"), txtNota,
+                new Label("Tipo:"), txtTipo,
+                new Label("Matrícula:"), txtMatricula,
+                btnSalvar, btnExcluir);
 
         tabela = new TableView<>();
         tabela.setItems(obsAvaliacoes);
@@ -57,11 +61,21 @@ public class AvaliacaoView extends VBox {
 
     private void adicionarAvaliacao() {
         try {
-            double nota = Double.parseDouble(txtNota.getText().replace(",", ".")); // Tratamento de campos numéricos
-            String tipo = txtTipo.getText();
-            String matricula = txtMatricula.getText();
+            String notaStr = txtNota.getText().trim();
+            String tipo = txtTipo.getText().trim();
+            String matricula = txtMatricula.getText().trim();
 
-            if(tipo.isEmpty() || matricula.isEmpty()) throw new Exception("Preencha todos os campos");
+            if (notaStr.isEmpty() || tipo.isEmpty() || matricula.isEmpty()) {
+                mostrarAlerta("Validação", "Preencha todos os campos.");
+                return;
+            }
+
+            double nota = Double.parseDouble(notaStr.replace(",", "."));
+
+            if (nota < 0 || nota > 10) {
+                mostrarAlerta("Regra de Negócio", "A nota deve estar entre 0 e 10.");
+                return;
+            }
 
             Avaliacao nova = new Avaliacao(nota, tipo, matricula);
             listaMemoria.add(nova);
@@ -69,19 +83,30 @@ public class AvaliacaoView extends VBox {
             dao.salvarDados(listaMemoria);
 
             txtNota.clear(); txtTipo.clear(); txtMatricula.clear();
+
         } catch (NumberFormatException ex) {
-            System.err.println("Erro: A nota deve ser um número válido!");
+            mostrarAlerta("Erro de Formato", "A nota deve ser um número válido (ex: 8.5).");
         } catch (Exception ex) {
-            System.err.println(ex.getMessage());
+            mostrarAlerta("Erro", ex.getMessage() != null ? ex.getMessage() : "Erro inesperado.");
         }
     }
 
     private void removerAvaliacao() {
         Avaliacao selecionada = tabela.getSelectionModel().getSelectedItem();
-        if (selecionada != null) {
-            listaMemoria.remove(selecionada);
-            obsAvaliacoes.remove(selecionada);
-            dao.salvarDados(listaMemoria);
+        if (selecionada == null) {
+            mostrarAlerta("Aviso", "Selecione uma avaliação na tabela para excluir.");
+            return;
         }
+        listaMemoria.remove(selecionada);
+        obsAvaliacoes.remove(selecionada);
+        dao.salvarDados(listaMemoria);
+    }
+
+    private void mostrarAlerta(String titulo, String mensagem) {
+        Alert alerta = new Alert(Alert.AlertType.WARNING);
+        alerta.setTitle(titulo);
+        alerta.setHeaderText(null);
+        alerta.setContentText(mensagem);
+        alerta.showAndWait();
     }
 }

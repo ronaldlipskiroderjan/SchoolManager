@@ -37,3 +37,9 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Dados gerados em runtime ###
+*.dat
+
+### Bibliotecas locais ###
+lib/

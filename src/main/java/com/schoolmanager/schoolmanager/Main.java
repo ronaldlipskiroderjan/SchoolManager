@@ -5,8 +5,10 @@ import com.schoolmanager.schoolmanager.view.AvaliacaoView;
 import com.schoolmanager.schoolmanager.view.CursoView;
 import com.schoolmanager.schoolmanager.view.DisciplinaView;
 import com.schoolmanager.schoolmanager.view.FrequenciaView;
+import com.schoolmanager.schoolmanager.view.MatriculaView;
 import com.schoolmanager.schoolmanager.view.ProfessorView;
 import com.schoolmanager.schoolmanager.view.ResponsavelView;
+import com.schoolmanager.schoolmanager.view.SalaView;
 import com.schoolmanager.schoolmanager.view.TurmaView;
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -28,7 +30,7 @@ public class Main extends Application {
     public void start(Stage palcoPrimario) {
         painelPrincipal = new BorderPane();
 
-        VBox menuLateral = new VBox(15);
+        VBox menuLateral = new VBox(10);
         menuLateral.setPadding(new Insets(20));
         menuLateral.setStyle("-fx-background-color: #2c3e50;");
         menuLateral.setPrefWidth(220);
@@ -43,9 +45,10 @@ public class Main extends Application {
         Button btnResponsaveis = criarBotaoMenu("4. Responsáveis");
         Button btnCursos = criarBotaoMenu("5. Cursos");
         Button btnTurmas = criarBotaoMenu("6. Turmas");
-
-        Button btnAvaliacoes = criarBotaoMenu("7. Avaliações (Notas)");
-        Button btnFrequencias = criarBotaoMenu("8. Frequência (Chamada)");
+        Button btnAvaliacoes = criarBotaoMenu("7. Notas");
+        Button btnFrequencias = criarBotaoMenu("8. Frequência");
+        Button btnSalas = criarBotaoMenu("9. Salas");
+        Button btnMatriculas = criarBotaoMenu("10. Matrículas");
 
         btnAlunos.setOnAction(e -> painelPrincipal.setCenter(new AlunoView()));
         btnProfessores.setOnAction(e -> painelPrincipal.setCenter(new ProfessorView()));
@@ -55,14 +58,21 @@ public class Main extends Application {
         btnTurmas.setOnAction(e -> painelPrincipal.setCenter(new TurmaView().iniciarTela()));
         btnAvaliacoes.setOnAction(e -> painelPrincipal.setCenter(new AvaliacaoView()));
         btnFrequencias.setOnAction(e -> painelPrincipal.setCenter(new FrequenciaView()));
+        btnSalas.setOnAction(e -> painelPrincipal.setCenter(new SalaView().iniciarTela()));
+        btnMatriculas.setOnAction(e -> painelPrincipal.setCenter(new MatriculaView().iniciarTela()));
 
         menuLateral.getChildren().addAll(
                 tituloMenu,
-                new Label(" "), // Espaçador
-                btnAlunos, btnProfessores, btnDisciplinas, btnResponsaveis,
-                btnCursos, btnTurmas,
-                new Label(" "), // Espaçador
-                btnAvaliacoes, btnFrequencias
+                btnAlunos,
+                btnProfessores,
+                btnDisciplinas,
+                btnResponsaveis,
+                btnCursos,
+                btnTurmas,
+                btnAvaliacoes,
+                btnFrequencias,
+                btnSalas,
+                btnMatriculas
         );
 
         VBox telaBoasVindas = new VBox(10);
@@ -76,7 +86,7 @@ public class Main extends Application {
         painelPrincipal.setCenter(telaBoasVindas);
 
         Scene cena = new Scene(painelPrincipal, 900, 600);
-        palcoPrimario.setTitle("Sistema de Gestão Escolar - RA3");
+        palcoPrimario.setTitle("Sistema de Gestão Escolar");
         palcoPrimario.setScene(cena);
         palcoPrimario.show();
     }
