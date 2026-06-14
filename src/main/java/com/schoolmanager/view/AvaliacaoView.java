@@ -17,6 +17,7 @@ public class AvaliacaoView extends VBox {
     private ObservableList<Avaliacao> obsAvaliacoes;
     private ArrayList<Avaliacao> listaMemoria;
     private AvaliacaoDAO dao;
+    private Avaliacao itemSelecionado;
 
     public AvaliacaoView() {
         dao = new AvaliacaoDAO();
@@ -31,13 +32,14 @@ public class AvaliacaoView extends VBox {
         txtMatricula = new TextField(); txtMatricula.setPromptText("ID Matrícula");
 
         Button btnSalvar = new Button("Salvar");
+        Button btnAtualizar = new Button("Atualizar");
         Button btnExcluir = new Button("Excluir");
 
         HBox form = new HBox(10,
                 new Label("Nota:"), txtNota,
                 new Label("Tipo:"), txtTipo,
                 new Label("Matrícula:"), txtMatricula,
-                btnSalvar, btnExcluir);
+                btnSalvar, btnAtualizar, btnExcluir);
 
         tabela = new TableView<>();
         tabela.setItems(obsAvaliacoes);
@@ -53,7 +55,17 @@ public class AvaliacaoView extends VBox {
 
         tabela.getColumns().addAll(colNota, colTipo, colMatricula);
 
+        tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
+            if (novo != null) {
+                itemSelecionado = novo;
+                txtNota.setText(String.valueOf(novo.getValorNota()));
+                txtTipo.setText(novo.getTipo());
+                txtMatricula.setText(novo.getMatriculaId());
+            }
+        });
+
         btnSalvar.setOnAction(e -> adicionarAvaliacao());
+        btnAtualizar.setOnAction(e -> atualizarAvaliacao());
         btnExcluir.setOnAction(e -> removerAvaliacao());
 
         getChildren().addAll(new Label("Gerenciamento de Avaliações"), form, tabela);
@@ -88,6 +100,41 @@ public class AvaliacaoView extends VBox {
             mostrarAlerta("Erro de Formato", "A nota deve ser um número válido (ex: 8.5).");
         } catch (Exception ex) {
             mostrarAlerta("Erro", ex.getMessage() != null ? ex.getMessage() : "Erro inesperado.");
+        }
+    }
+
+    private void atualizarAvaliacao() {
+        if (itemSelecionado == null) {
+            mostrarAlerta("Aviso", "Selecione uma avaliação na tabela para atualizar.");
+            return;
+        }
+        try {
+            String notaStr = txtNota.getText().trim();
+            String tipo = txtTipo.getText().trim();
+            String matricula = txtMatricula.getText().trim();
+
+            if (notaStr.isEmpty() || tipo.isEmpty() || matricula.isEmpty()) {
+                mostrarAlerta("Validação", "Preencha todos os campos.");
+                return;
+            }
+
+            double nota = Double.parseDouble(notaStr.replace(",", "."));
+            if (nota < 0 || nota > 10) {
+                mostrarAlerta("Regra de Negócio", "A nota deve estar entre 0 e 10.");
+                return;
+            }
+
+            itemSelecionado.setValorNota(nota);
+            itemSelecionado.setTipo(tipo);
+            itemSelecionado.setMatriculaId(matricula);
+            dao.salvarDados(listaMemoria);
+            tabela.refresh();
+
+            txtNota.clear(); txtTipo.clear(); txtMatricula.clear();
+            tabela.getSelectionModel().clearSelection();
+            itemSelecionado = null;
+        } catch (NumberFormatException ex) {
+            mostrarAlerta("Erro de Formato", "A nota deve ser um número válido (ex: 8.5).");
         }
     }
 
