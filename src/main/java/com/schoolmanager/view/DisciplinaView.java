@@ -17,6 +17,7 @@ public class DisciplinaView extends VBox {
     private ObservableList<Disciplina> obsDisciplinas;
     private ArrayList<Disciplina> listaMemoria;
     private DisciplinaDAO dao;
+    private Disciplina itemSelecionado;
 
     public DisciplinaView() {
         dao = new DisciplinaDAO();
@@ -33,6 +34,7 @@ public class DisciplinaView extends VBox {
         txtProfessorId = new TextField(); txtProfessorId.setPromptText("CPF do Professor");
 
         Button btnSalvar = new Button("Salvar");
+        Button btnAtualizar = new Button("Atualizar");
         Button btnExcluir = new Button("Excluir");
 
         HBox form = new HBox(10,
@@ -41,7 +43,7 @@ public class DisciplinaView extends VBox {
                 new Label("Carga (h):"), txtCargaHoraria,
                 new Label("Ementa:"), txtEmenta,
                 new Label("CPF Professor:"), txtProfessorId,
-                btnSalvar, btnExcluir);
+                btnSalvar, btnAtualizar, btnExcluir);
 
         tabela = new TableView<>();
         tabela.setItems(obsDisciplinas);
@@ -63,7 +65,19 @@ public class DisciplinaView extends VBox {
 
         tabela.getColumns().addAll(colCodigo, colNome, colCarga, colEmenta, colProfessor);
 
+        tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
+            if (novo != null) {
+                itemSelecionado = novo;
+                txtCodigo.setText(novo.getCodigo());
+                txtNome.setText(novo.getNome());
+                txtCargaHoraria.setText(String.valueOf(novo.getCargaHoraria()));
+                txtEmenta.setText(novo.getEmenta());
+                txtProfessorId.setText(novo.getProfessorId());
+            }
+        });
+
         btnSalvar.setOnAction(e -> adicionarDisciplina());
+        btnAtualizar.setOnAction(e -> atualizarDisciplina());
         btnExcluir.setOnAction(e -> removerDisciplina());
 
         getChildren().addAll(new Label("Gerenciamento de Disciplinas"), form, tabela);
@@ -93,6 +107,40 @@ public class DisciplinaView extends VBox {
             mostrarAlerta("Erro de Formato", "Carga horária deve ser um número inteiro.");
         } catch (Exception ex) {
             mostrarAlerta("Erro", ex.getMessage());
+        }
+    }
+
+    private void atualizarDisciplina() {
+        if (itemSelecionado == null) {
+            mostrarAlerta("Aviso", "Selecione uma disciplina na tabela para atualizar.");
+            return;
+        }
+        try {
+            String codigo = txtCodigo.getText();
+            String nome = txtNome.getText();
+            int cargaHoraria = Integer.parseInt(txtCargaHoraria.getText());
+            String ementa = txtEmenta.getText();
+            String professorId = txtProfessorId.getText();
+
+            if (codigo.isEmpty() || nome.isEmpty() || ementa.isEmpty() || professorId.isEmpty()) {
+                mostrarAlerta("Erro", "Preencha todos os campos.");
+                return;
+            }
+
+            itemSelecionado.setCodigo(codigo);
+            itemSelecionado.setNome(nome);
+            itemSelecionado.setCargaHoraria(cargaHoraria);
+            itemSelecionado.setEmenta(ementa);
+            itemSelecionado.setProfessorId(professorId);
+            dao.salvarTodos(listaMemoria);
+            tabela.refresh();
+
+            txtCodigo.clear(); txtNome.clear(); txtCargaHoraria.clear();
+            txtEmenta.clear(); txtProfessorId.clear();
+            tabela.getSelectionModel().clearSelection();
+            itemSelecionado = null;
+        } catch (NumberFormatException ex) {
+            mostrarAlerta("Erro de Formato", "Carga horária deve ser um número inteiro.");
         }
     }
 

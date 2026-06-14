@@ -17,6 +17,7 @@ public class AlunoView extends VBox {
     private ObservableList<Aluno> obsAlunos;
     private ArrayList<Aluno> listaMemoria;
     private AlunoDAO dao;
+    private Aluno itemSelecionado;
 
     public AlunoView() {
         dao = new AlunoDAO();
@@ -33,6 +34,7 @@ public class AlunoView extends VBox {
         txtTelefone = new TextField(); txtTelefone.setPromptText("Telefone (ex: (11) 99999-9999)");
 
         Button btnSalvar = new Button("Salvar");
+        Button btnAtualizar = new Button("Atualizar");
         Button btnExcluir = new Button("Excluir");
 
         HBox form = new HBox(10,
@@ -41,7 +43,7 @@ public class AlunoView extends VBox {
                 new Label("E-mail:"), txtEmail,
                 new Label("Matrícula:"), txtMatricula,
                 new Label("Telefone:"), txtTelefone,
-                btnSalvar, btnExcluir);
+                btnSalvar, btnAtualizar, btnExcluir);
 
         tabela = new TableView<>();
         tabela.setItems(obsAlunos);
@@ -63,7 +65,19 @@ public class AlunoView extends VBox {
 
         tabela.getColumns().addAll(colNome, colCpf, colEmail, colMatricula, colTelefone);
 
+        tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
+            if (novo != null) {
+                itemSelecionado = novo;
+                txtNome.setText(novo.getNome());
+                txtCpf.setText(novo.getCpf());
+                txtEmail.setText(novo.getEmail());
+                txtMatricula.setText(novo.getMatricula());
+                txtTelefone.setText(novo.getTelefone());
+            }
+        });
+
         btnSalvar.setOnAction(e -> adicionarAluno());
+        btnAtualizar.setOnAction(e -> atualizarAluno());
         btnExcluir.setOnAction(e -> removerAluno());
 
         getChildren().addAll(new Label("Gerenciamento de Alunos (Discentes)"), form, tabela);
@@ -91,6 +105,35 @@ public class AlunoView extends VBox {
         } catch (Exception ex) {
             mostrarAlerta("Erro", ex.getMessage());
         }
+    }
+
+    private void atualizarAluno() {
+        if (itemSelecionado == null) {
+            mostrarAlerta("Aviso", "Selecione um aluno na tabela para atualizar.");
+            return;
+        }
+        String nome = txtNome.getText();
+        String cpf = txtCpf.getText();
+        String email = txtEmail.getText();
+        String matricula = txtMatricula.getText();
+        String telefone = txtTelefone.getText();
+
+        if (nome.isEmpty() || cpf.isEmpty() || email.isEmpty() || matricula.isEmpty() || telefone.isEmpty()) {
+            mostrarAlerta("Erro", "Preencha todos os campos.");
+            return;
+        }
+
+        itemSelecionado.setNome(nome);
+        itemSelecionado.setCpf(cpf);
+        itemSelecionado.setEmail(email);
+        itemSelecionado.setMatricula(matricula);
+        itemSelecionado.setTelefone(telefone);
+        dao.salvarTodos(listaMemoria);
+        tabela.refresh();
+
+        txtNome.clear(); txtCpf.clear(); txtEmail.clear(); txtMatricula.clear(); txtTelefone.clear();
+        tabela.getSelectionModel().clearSelection();
+        itemSelecionado = null;
     }
 
     private void removerAluno() {

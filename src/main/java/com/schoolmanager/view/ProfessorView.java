@@ -17,6 +17,7 @@ public class ProfessorView extends VBox {
     private ObservableList<Professor> obsProfessores;
     private ArrayList<Professor> listaMemoria;
     private ProfessorDAO dao;
+    private Professor itemSelecionado;
 
     public ProfessorView() {
         dao = new ProfessorDAO();
@@ -33,6 +34,7 @@ public class ProfessorView extends VBox {
         txtEspecialidade = new TextField(); txtEspecialidade.setPromptText("Especialidade");
 
         Button btnSalvar = new Button("Salvar");
+        Button btnAtualizar = new Button("Atualizar");
         Button btnExcluir = new Button("Excluir");
 
         HBox form = new HBox(10,
@@ -41,7 +43,7 @@ public class ProfessorView extends VBox {
                 new Label("E-mail:"), txtEmail,
                 new Label("Titulação:"), txtTitulacao,
                 new Label("Especialidade:"), txtEspecialidade,
-                btnSalvar, btnExcluir);
+                btnSalvar, btnAtualizar, btnExcluir);
 
         tabela = new TableView<>();
         tabela.setItems(obsProfessores);
@@ -63,7 +65,19 @@ public class ProfessorView extends VBox {
 
         tabela.getColumns().addAll(colNome, colCpf, colEmail, colTitulacao, colEspecialidade);
 
+        tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
+            if (novo != null) {
+                itemSelecionado = novo;
+                txtNome.setText(novo.getNome());
+                txtCpf.setText(novo.getCpf());
+                txtEmail.setText(novo.getEmail());
+                txtTitulacao.setText(novo.getTitulacao());
+                txtEspecialidade.setText(novo.getEspecialidade());
+            }
+        });
+
         btnSalvar.setOnAction(e -> adicionarProfessor());
+        btnAtualizar.setOnAction(e -> atualizarProfessor());
         btnExcluir.setOnAction(e -> removerProfessor());
 
         getChildren().addAll(new Label("Gerenciamento de Professores (Docentes)"), form, tabela);
@@ -91,6 +105,35 @@ public class ProfessorView extends VBox {
         } catch (Exception ex) {
             mostrarAlerta("Erro", ex.getMessage());
         }
+    }
+
+    private void atualizarProfessor() {
+        if (itemSelecionado == null) {
+            mostrarAlerta("Aviso", "Selecione um professor na tabela para atualizar.");
+            return;
+        }
+        String nome = txtNome.getText();
+        String cpf = txtCpf.getText();
+        String email = txtEmail.getText();
+        String titulacao = txtTitulacao.getText();
+        String especialidade = txtEspecialidade.getText();
+
+        if (nome.isEmpty() || cpf.isEmpty() || email.isEmpty() || titulacao.isEmpty() || especialidade.isEmpty()) {
+            mostrarAlerta("Erro", "Preencha todos os campos.");
+            return;
+        }
+
+        itemSelecionado.setNome(nome);
+        itemSelecionado.setCpf(cpf);
+        itemSelecionado.setEmail(email);
+        itemSelecionado.setTitulacao(titulacao);
+        itemSelecionado.setEspecialidade(especialidade);
+        dao.salvarTodos(listaMemoria);
+        tabela.refresh();
+
+        txtNome.clear(); txtCpf.clear(); txtEmail.clear(); txtTitulacao.clear(); txtEspecialidade.clear();
+        tabela.getSelectionModel().clearSelection();
+        itemSelecionado = null;
     }
 
     private void removerProfessor() {

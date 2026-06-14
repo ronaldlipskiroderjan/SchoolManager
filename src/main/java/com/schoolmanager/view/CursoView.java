@@ -19,6 +19,7 @@ public class CursoView {
     private TextField txtNome = new TextField();
     private TextField txtDuracao = new TextField();
     private TextField txtCoordenadorId = new TextField();
+    private Curso itemSelecionado;
 
     public VBox iniciarTela() {
         VBox painel = new VBox(10);
@@ -28,13 +29,16 @@ public class CursoView {
         txtDuracao.setPromptText("Duração (Semestres)");
         txtCoordenadorId.setPromptText("ID do Professor Coordenador");
 
-        Button btnSalvar = new Button("Cadastrar Curso");
+        Button btnSalvar = new Button("Salvar");
         btnSalvar.setOnAction(e -> executarCadastro());
 
-        Button btnExcluir = new Button("Excluir Selecionado");
+        Button btnAtualizar = new Button("Atualizar");
+        btnAtualizar.setOnAction(e -> executarAtualizacao());
+
+        Button btnExcluir = new Button("Excluir");
         btnExcluir.setOnAction(e -> excluirRegistro());
 
-        HBox form = new HBox(10, txtNome, txtDuracao, txtCoordenadorId, btnSalvar, btnExcluir);
+        HBox form = new HBox(10, txtNome, txtDuracao, txtCoordenadorId, btnSalvar, btnAtualizar, btnExcluir);
 
         TableColumn<Curso, String> colNome = new TableColumn<>("Nome");
         colNome.setCellValueFactory(new PropertyValueFactory<>("nome"));
@@ -47,6 +51,16 @@ public class CursoView {
 
         tabela.getColumns().addAll(colNome, colDuracao, colCoordenador);
         tabela.setItems(dadosTabela);
+
+        tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
+            if (novo != null) {
+                itemSelecionado = novo;
+                txtNome.setText(novo.getNome());
+                txtDuracao.setText(String.valueOf(novo.getDuracaoSemestres()));
+                txtCoordenadorId.setText(novo.getCoordenadorId());
+            }
+        });
+
         carregarTabela();
 
         painel.getChildren().addAll(new Label("Gestão de Cursos (Membro 3)"), form, tabela);
@@ -68,6 +82,35 @@ public class CursoView {
             dao.adicionar(novo);
             txtNome.clear(); txtDuracao.clear(); txtCoordenadorId.clear();
             carregarTabela();
+        } catch (NumberFormatException ex) {
+            mostrarAlerta("Erro de Formato", "Duração deve ser um número inteiro.");
+        }
+    }
+
+    private void executarAtualizacao() {
+        if (itemSelecionado == null) {
+            mostrarAlerta("Aviso", "Selecione um curso na tabela para atualizar.");
+            return;
+        }
+        try {
+            String nome = txtNome.getText();
+            int duracao = Integer.parseInt(txtDuracao.getText());
+            String coordenadorId = txtCoordenadorId.getText();
+
+            if (nome.isEmpty() || coordenadorId.isEmpty()) {
+                mostrarAlerta("Erro", "Preencha todos os campos.");
+                return;
+            }
+
+            itemSelecionado.setNome(nome);
+            itemSelecionado.setDuracaoSemestres(duracao);
+            itemSelecionado.setCoordenadorId(coordenadorId);
+            dao.salvarTodos(new ArrayList<>(dadosTabela));
+            tabela.refresh();
+
+            txtNome.clear(); txtDuracao.clear(); txtCoordenadorId.clear();
+            tabela.getSelectionModel().clearSelection();
+            itemSelecionado = null;
         } catch (NumberFormatException ex) {
             mostrarAlerta("Erro de Formato", "Duração deve ser um número inteiro.");
         }

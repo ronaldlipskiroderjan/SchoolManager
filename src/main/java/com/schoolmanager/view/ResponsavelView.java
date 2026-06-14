@@ -17,6 +17,7 @@ public class ResponsavelView extends VBox {
     private ObservableList<Responsavel> obsResponsaveis;
     private ArrayList<Responsavel> listaMemoria;
     private ResponsavelDAO dao;
+    private Responsavel itemSelecionado;
 
     public ResponsavelView() {
         dao = new ResponsavelDAO();
@@ -33,6 +34,7 @@ public class ResponsavelView extends VBox {
         txtAlunoMatricula = new TextField(); txtAlunoMatricula.setPromptText("Matrícula do Aluno");
 
         Button btnSalvar = new Button("Salvar");
+        Button btnAtualizar = new Button("Atualizar");
         Button btnExcluir = new Button("Excluir");
 
         HBox form = new HBox(10,
@@ -41,7 +43,7 @@ public class ResponsavelView extends VBox {
                 new Label("E-mail:"), txtEmail,
                 new Label("Telefone:"), txtTelefone,
                 new Label("Matrícula Aluno:"), txtAlunoMatricula,
-                btnSalvar, btnExcluir);
+                btnSalvar, btnAtualizar, btnExcluir);
 
         tabela = new TableView<>();
         tabela.setItems(obsResponsaveis);
@@ -63,7 +65,19 @@ public class ResponsavelView extends VBox {
 
         tabela.getColumns().addAll(colNome, colCpf, colEmail, colTelefone, colAluno);
 
+        tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
+            if (novo != null) {
+                itemSelecionado = novo;
+                txtNome.setText(novo.getNome());
+                txtCpf.setText(novo.getCpf());
+                txtEmail.setText(novo.getEmail());
+                txtTelefone.setText(novo.getTelefone());
+                txtAlunoMatricula.setText(novo.getAlunoMatricula());
+            }
+        });
+
         btnSalvar.setOnAction(e -> adicionarResponsavel());
+        btnAtualizar.setOnAction(e -> atualizarResponsavel());
         btnExcluir.setOnAction(e -> removerResponsavel());
 
         getChildren().addAll(new Label("Gerenciamento de Responsáveis"), form, tabela);
@@ -91,6 +105,35 @@ public class ResponsavelView extends VBox {
         } catch (Exception ex) {
             mostrarAlerta("Erro", ex.getMessage());
         }
+    }
+
+    private void atualizarResponsavel() {
+        if (itemSelecionado == null) {
+            mostrarAlerta("Aviso", "Selecione um responsável na tabela para atualizar.");
+            return;
+        }
+        String nome = txtNome.getText();
+        String cpf = txtCpf.getText();
+        String email = txtEmail.getText();
+        String telefone = txtTelefone.getText();
+        String alunoMatricula = txtAlunoMatricula.getText();
+
+        if (nome.isEmpty() || cpf.isEmpty() || email.isEmpty() || telefone.isEmpty() || alunoMatricula.isEmpty()) {
+            mostrarAlerta("Erro", "Preencha todos os campos.");
+            return;
+        }
+
+        itemSelecionado.setNome(nome);
+        itemSelecionado.setCpf(cpf);
+        itemSelecionado.setEmail(email);
+        itemSelecionado.setTelefone(telefone);
+        itemSelecionado.setAlunoMatricula(alunoMatricula);
+        dao.salvarTodos(listaMemoria);
+        tabela.refresh();
+
+        txtNome.clear(); txtCpf.clear(); txtEmail.clear(); txtTelefone.clear(); txtAlunoMatricula.clear();
+        tabela.getSelectionModel().clearSelection();
+        itemSelecionado = null;
     }
 
     private void removerResponsavel() {

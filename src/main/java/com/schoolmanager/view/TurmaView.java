@@ -19,6 +19,7 @@ public class TurmaView {
     private TextField txtCodigo = new TextField();
     private TextField txtSemestre = new TextField();
     private TextField txtDisciplinaId = new TextField();
+    private Turma itemSelecionado;
 
     public VBox iniciarTela() {
         VBox painel = new VBox(10);
@@ -28,13 +29,16 @@ public class TurmaView {
         txtSemestre.setPromptText("Semestre (ex: 2026.1)");
         txtDisciplinaId.setPromptText("ID da Disciplina");
 
-        Button btnSalvar = new Button("Cadastrar Turma");
+        Button btnSalvar = new Button("Salvar");
         btnSalvar.setOnAction(e -> executarCadastro());
 
-        Button btnExcluir = new Button("Excluir Selecionada");
+        Button btnAtualizar = new Button("Atualizar");
+        btnAtualizar.setOnAction(e -> executarAtualizacao());
+
+        Button btnExcluir = new Button("Excluir");
         btnExcluir.setOnAction(e -> excluirRegistro());
 
-        HBox form = new HBox(10, txtCodigo, txtSemestre, txtDisciplinaId, btnSalvar, btnExcluir);
+        HBox form = new HBox(10, txtCodigo, txtSemestre, txtDisciplinaId, btnSalvar, btnAtualizar, btnExcluir);
 
         TableColumn<Turma, String> colCodigo = new TableColumn<>("Código");
         colCodigo.setCellValueFactory(new PropertyValueFactory<>("codigo"));
@@ -47,6 +51,16 @@ public class TurmaView {
 
         tabela.getColumns().addAll(colCodigo, colSemestre, colDisciplina);
         tabela.setItems(dadosTabela);
+
+        tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
+            if (novo != null) {
+                itemSelecionado = novo;
+                txtCodigo.setText(novo.getCodigo());
+                txtSemestre.setText(novo.getSemestre());
+                txtDisciplinaId.setText(novo.getDisciplinaId());
+            }
+        });
+
         carregarTabela();
 
         painel.getChildren().addAll(new Label("Gestão de Turmas (Membro 3)"), form, tabela);
@@ -67,6 +81,31 @@ public class TurmaView {
         dao.adicionar(nova);
         txtCodigo.clear(); txtSemestre.clear(); txtDisciplinaId.clear();
         carregarTabela();
+    }
+
+    private void executarAtualizacao() {
+        if (itemSelecionado == null) {
+            mostrarAlerta("Aviso", "Selecione uma turma na tabela para atualizar.");
+            return;
+        }
+        String codigo = txtCodigo.getText();
+        String semestre = txtSemestre.getText();
+        String disciplinaId = txtDisciplinaId.getText();
+
+        if (codigo.isEmpty() || semestre.isEmpty() || disciplinaId.isEmpty()) {
+            mostrarAlerta("Erro", "Preencha todos os campos.");
+            return;
+        }
+
+        itemSelecionado.setCodigo(codigo);
+        itemSelecionado.setSemestre(semestre);
+        itemSelecionado.setDisciplinaId(disciplinaId);
+        dao.salvarTodos(new ArrayList<>(dadosTabela));
+        tabela.refresh();
+
+        txtCodigo.clear(); txtSemestre.clear(); txtDisciplinaId.clear();
+        tabela.getSelectionModel().clearSelection();
+        itemSelecionado = null;
     }
 
     private void carregarTabela() {
