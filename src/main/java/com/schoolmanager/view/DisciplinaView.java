@@ -97,9 +97,9 @@ public class DisciplinaView extends VBox {
             }
 
             Disciplina nova = new Disciplina(codigo, nome, cargaHoraria, ementa, professorId);
+            dao.adicionar(nova);
             listaMemoria.add(nova);
             obsDisciplinas.add(nova);
-            dao.salvarTodos(listaMemoria);
 
             txtCodigo.clear(); txtNome.clear(); txtCargaHoraria.clear();
             txtEmenta.clear(); txtProfessorId.clear();
@@ -127,12 +127,13 @@ public class DisciplinaView extends VBox {
                 return;
             }
 
+            String codigoOriginal = itemSelecionado.getCodigo();
+            dao.atualizar(codigoOriginal, new Disciplina(codigo, nome, cargaHoraria, ementa, professorId));
             itemSelecionado.setCodigo(codigo);
             itemSelecionado.setNome(nome);
             itemSelecionado.setCargaHoraria(cargaHoraria);
             itemSelecionado.setEmenta(ementa);
             itemSelecionado.setProfessorId(professorId);
-            dao.salvarTodos(listaMemoria);
             tabela.refresh();
 
             txtCodigo.clear(); txtNome.clear(); txtCargaHoraria.clear();
@@ -147,9 +148,9 @@ public class DisciplinaView extends VBox {
     private void removerDisciplina() {
         Disciplina selecionada = tabela.getSelectionModel().getSelectedItem();
         if (selecionada != null) {
+            dao.remover(selecionada.getCodigo());
             listaMemoria.remove(selecionada);
             obsDisciplinas.remove(selecionada);
-            dao.salvarTodos(listaMemoria);
         } else {
             mostrarAlerta("Aviso", "Selecione uma disciplina na tabela.");
         }

@@ -9,7 +9,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import java.util.ArrayList;
 
 public class CursoView {
     private CursoDAO dao = new CursoDAO();
@@ -102,15 +101,12 @@ public class CursoView {
                 return;
             }
 
-            itemSelecionado.setNome(nome);
-            itemSelecionado.setDuracaoSemestres(duracao);
-            itemSelecionado.setCoordenadorId(coordenadorId);
-            dao.salvarTodos(new ArrayList<>(dadosTabela));
-            tabela.refresh();
-
+            String nomeOriginal = itemSelecionado.getNome();
+            dao.atualizar(nomeOriginal, new Curso(nome, duracao, coordenadorId));
             txtNome.clear(); txtDuracao.clear(); txtCoordenadorId.clear();
             tabela.getSelectionModel().clearSelection();
             itemSelecionado = null;
+            carregarTabela();
         } catch (NumberFormatException ex) {
             mostrarAlerta("Erro de Formato", "Duração deve ser um número inteiro.");
         }
@@ -124,8 +120,7 @@ public class CursoView {
     private void excluirRegistro() {
         Curso selecionado = tabela.getSelectionModel().getSelectedItem();
         if (selecionado != null) {
-            dadosTabela.remove(selecionado);
-            dao.salvarTodos(new ArrayList<>(dadosTabela));
+            dao.remover(selecionado.getNome());
             carregarTabela();
         } else {
             mostrarAlerta("Aviso", "Selecione um curso na tabela.");

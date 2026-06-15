@@ -9,7 +9,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import java.util.ArrayList;
 
 public class SalaView {
     private final SalaDAO dao = new SalaDAO();
@@ -114,15 +113,12 @@ public class SalaView {
                 return;
             }
 
-            itemSelecionado.setNumero(numero);
-            itemSelecionado.setBloco(bloco);
-            itemSelecionado.setCapacidade(capacidade);
-            dao.salvarLista(new ArrayList<>(dadosTabela));
-            tabela.refresh();
-
+            String numeroOriginal = itemSelecionado.getNumero();
+            dao.atualizar(numeroOriginal, new Sala(numero, bloco, capacidade));
             txtNumero.clear(); txtBloco.clear(); txtCapacidade.clear();
             tabela.getSelectionModel().clearSelection();
             itemSelecionado = null;
+            carregarTabela();
 
         } catch (NumberFormatException ex) {
             mostrarAlerta("Erro de Tipo", "A capacidade aceita apenas números inteiros.");
@@ -135,8 +131,7 @@ public class SalaView {
             mostrarAlerta("Aviso", "Selecione uma sala para excluir.");
             return;
         }
-        dadosTabela.remove(selecionada);
-        dao.salvarLista(new ArrayList<>(dadosTabela));
+        dao.remover(selecionada.getNumero());
         carregarTabela();
     }
 

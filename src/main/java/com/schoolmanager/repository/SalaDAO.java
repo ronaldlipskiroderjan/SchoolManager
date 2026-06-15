@@ -1,42 +1,53 @@
 package com.schoolmanager.repository;
+
 import com.schoolmanager.model.Sala;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
 
 public class SalaDAO {
-    private static final String FILE_NAME = "salas.dat";
-
-    @SuppressWarnings("unchecked")
-    public List<Sala> listarTodos() {
-        File file = new File(FILE_NAME);
-        if (!file.exists()) {
-            return new ArrayList<>();
-        }
-
-        try (ObjectInputStream ois = new ObjectInputStream(Files.newInputStream(Paths.get(FILE_NAME)))) {
-            return (List<Sala>) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Erro ao ler salas.dat: " + e.getMessage());
-            return new ArrayList<>();
-        }
-    }
-
-    public void salvarLista(List<Sala> lista) {
-
-        try (ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(Paths.get(FILE_NAME)))) {
-            oos.writeObject(lista);
-        } catch (IOException e) {
-            System.out.println("Erro ao gravar em salas.dat: " + e.getMessage());
-        }
-    }
+    private final String ARQUIVO = "salas.dat";
 
     public void adicionar(Sala sala) {
-        List<Sala> lista = listarTodos();
+        ArrayList<Sala> lista = listarTodos();
         lista.add(sala);
-        salvarLista(lista);
+        salvarTodos(lista);
+    }
+
+    @SuppressWarnings("unchecked")
+    public ArrayList<Sala> listarTodos() {
+        File arquivo = new File(ARQUIVO);
+        if (!arquivo.exists()) return new ArrayList<>();
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(ARQUIVO))) {
+            return (ArrayList<Sala>) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Erro ao ler salas: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    public void atualizar(String numero, Sala atualizado) {
+        ArrayList<Sala> lista = listarTodos();
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getNumero().equals(numero)) {
+                lista.set(i, atualizado);
+                break;
+            }
+        }
+        salvarTodos(lista);
+    }
+
+    public void remover(String numero) {
+        ArrayList<Sala> lista = listarTodos();
+        lista.removeIf(s -> s.getNumero().equals(numero));
+        salvarTodos(lista);
+    }
+
+    private void salvarTodos(ArrayList<Sala> salas) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(ARQUIVO))) {
+            oos.writeObject(salas);
+        } catch (IOException e) {
+            System.out.println("Erro ao salvar salas: " + e.getMessage());
+        }
     }
 }
