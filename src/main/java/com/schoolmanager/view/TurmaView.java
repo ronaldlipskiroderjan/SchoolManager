@@ -10,34 +10,39 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-public class TurmaView {
-    private TurmaDAO dao = new TurmaDAO();
-    private TableView<Turma> tabela = new TableView<>();
-    private ObservableList<Turma> dadosTabela = FXCollections.observableArrayList();
+public class TurmaView extends VBox {
 
-    private TextField txtCodigo = new TextField();
-    private TextField txtSemestre = new TextField();
-    private TextField txtDisciplinaId = new TextField();
+    private final TurmaDAO dao = new TurmaDAO();
+    private final TableView<Turma> tabela = new TableView<>();
+    private final ObservableList<Turma> dadosTabela = FXCollections.observableArrayList();
+
+    private final TextField txtCodigo = new TextField();
+    private final TextField txtSemestre = new TextField();
+    private final TextField txtDisciplinaId = new TextField();
+
     private Turma itemSelecionado;
 
-    public VBox iniciarTela() {
-        VBox painel = new VBox(10);
-        painel.setPadding(new Insets(15));
+    public TurmaView() {
+        setPadding(new Insets(15));
+        setSpacing(10);
 
         txtCodigo.setPromptText("Código (ex: TURMA-A)");
         txtSemestre.setPromptText("Semestre (ex: 2026.1)");
         txtDisciplinaId.setPromptText("ID da Disciplina");
 
         Button btnSalvar = new Button("Salvar");
-        btnSalvar.setOnAction(e -> executarCadastro());
-
         Button btnAtualizar = new Button("Atualizar");
-        btnAtualizar.setOnAction(e -> executarAtualizacao());
-
         Button btnExcluir = new Button("Excluir");
-        btnExcluir.setOnAction(e -> excluirRegistro());
 
-        HBox form = new HBox(10, txtCodigo, txtSemestre, txtDisciplinaId, btnSalvar, btnAtualizar, btnExcluir);
+        btnSalvar.setOnAction(e -> adicionar());
+        btnAtualizar.setOnAction(e -> atualizar());
+        btnExcluir.setOnAction(e -> remover());
+
+        HBox form = new HBox(10,
+                new Label("Código:"), txtCodigo,
+                new Label("Semestre:"), txtSemestre,
+                new Label("ID Disciplina:"), txtDisciplinaId,
+                btnSalvar, btnAtualizar, btnExcluir);
 
         TableColumn<Turma, String> colCodigo = new TableColumn<>("Código");
         colCodigo.setCellValueFactory(new PropertyValueFactory<>("codigo"));
@@ -62,65 +67,71 @@ public class TurmaView {
 
         carregarTabela();
 
-        painel.getChildren().addAll(new Label("Gestão de Turmas (Membro 3)"), form, tabela);
-        return painel;
+        getChildren().addAll(new Label("Gestão de Turmas"), form, tabela);
     }
 
-    private void executarCadastro() {
-        String codigo = txtCodigo.getText();
-        String semestre = txtSemestre.getText();
-        String disciplinaId = txtDisciplinaId.getText();
+    private void adicionar() {
+        String codigo = txtCodigo.getText().trim();
+        String semestre = txtSemestre.getText().trim();
+        String disciplinaId = txtDisciplinaId.getText().trim();
 
         if (codigo.isEmpty() || semestre.isEmpty() || disciplinaId.isEmpty()) {
             mostrarAlerta("Erro", "Preencha todos os campos.");
             return;
         }
 
-        Turma nova = new Turma(codigo, semestre, disciplinaId);
-        dao.adicionar(nova);
-        txtCodigo.clear(); txtSemestre.clear(); txtDisciplinaId.clear();
+        dao.adicionar(new Turma(codigo, semestre, disciplinaId));
         carregarTabela();
+        limparCampos();
     }
 
-    private void executarAtualizacao() {
+    private void atualizar() {
         if (itemSelecionado == null) {
             mostrarAlerta("Aviso", "Selecione uma turma na tabela para atualizar.");
             return;
         }
-        String codigo = txtCodigo.getText();
-        String semestre = txtSemestre.getText();
-        String disciplinaId = txtDisciplinaId.getText();
+
+        String codigo = txtCodigo.getText().trim();
+        String semestre = txtSemestre.getText().trim();
+        String disciplinaId = txtDisciplinaId.getText().trim();
 
         if (codigo.isEmpty() || semestre.isEmpty() || disciplinaId.isEmpty()) {
             mostrarAlerta("Erro", "Preencha todos os campos.");
             return;
         }
 
-        String codigoOriginal = itemSelecionado.getCodigo();
-        dao.atualizar(codigoOriginal, new Turma(codigo, semestre, disciplinaId));
-        txtCodigo.clear(); txtSemestre.clear(); txtDisciplinaId.clear();
-        tabela.getSelectionModel().clearSelection();
-        itemSelecionado = null;
+        dao.atualizar(itemSelecionado.getCodigo(), new Turma(codigo, semestre, disciplinaId));
         carregarTabela();
+        limparCampos();
+    }
+
+    private void remover() {
+        Turma selecionada = tabela.getSelectionModel().getSelectedItem();
+        if (selecionada == null) {
+            mostrarAlerta("Aviso", "Selecione uma turma na tabela.");
+            return;
+        }
+
+        dao.remover(selecionada.getCodigo());
+        carregarTabela();
+        limparCampos();
     }
 
     private void carregarTabela() {
         dadosTabela.clear();
         dadosTabela.addAll(dao.listarTodos());
+        itemSelecionado = null;
     }
 
-    private void excluirRegistro() {
-        Turma selecionada = tabela.getSelectionModel().getSelectedItem();
-        if (selecionada != null) {
-            dao.remover(selecionada.getCodigo());
-            carregarTabela();
-        } else {
-            mostrarAlerta("Aviso", "Selecione uma turma na tabela.");
-        }
+    private void limparCampos() {
+        txtCodigo.clear();
+        txtSemestre.clear();
+        txtDisciplinaId.clear();
+        tabela.getSelectionModel().clearSelection();
     }
 
     private void mostrarAlerta(String titulo, String mensagem) {
-        Alert alerta = new Alert(Alert.AlertType.ERROR);
+        Alert alerta = new Alert(Alert.AlertType.WARNING);
         alerta.setTitle(titulo);
         alerta.setHeaderText(null);
         alerta.setContentText(mensagem);

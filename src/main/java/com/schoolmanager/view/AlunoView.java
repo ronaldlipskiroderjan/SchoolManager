@@ -9,33 +9,38 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import java.util.ArrayList;
 
 public class AlunoView extends VBox {
-    private TextField txtNome, txtCpf, txtEmail, txtMatricula, txtTelefone;
-    private TableView<Aluno> tabela;
-    private ObservableList<Aluno> obsAlunos;
-    private ArrayList<Aluno> listaMemoria;
-    private AlunoDAO dao;
+
+    private final AlunoDAO dao = new AlunoDAO();
+    private final TableView<Aluno> tabela = new TableView<>();
+    private final ObservableList<Aluno> dadosTabela = FXCollections.observableArrayList();
+
+    private final TextField txtNome = new TextField();
+    private final TextField txtCpf = new TextField();
+    private final TextField txtEmail = new TextField();
+    private final TextField txtMatricula = new TextField();
+    private final TextField txtTelefone = new TextField();
+
     private Aluno itemSelecionado;
 
     public AlunoView() {
-        dao = new AlunoDAO();
-        listaMemoria = dao.listarTodos();
-        obsAlunos = FXCollections.observableArrayList(listaMemoria);
-
         setPadding(new Insets(15));
         setSpacing(10);
 
-        txtNome = new TextField(); txtNome.setPromptText("Nome completo");
-        txtCpf = new TextField(); txtCpf.setPromptText("CPF (ex: 000.000.000-00)");
-        txtEmail = new TextField(); txtEmail.setPromptText("E-mail");
-        txtMatricula = new TextField(); txtMatricula.setPromptText("Matrícula (ex: 2024001)");
-        txtTelefone = new TextField(); txtTelefone.setPromptText("Telefone (ex: (11) 99999-9999)");
+        txtNome.setPromptText("Nome completo");
+        txtCpf.setPromptText("CPF (ex: 000.000.000-00)");
+        txtEmail.setPromptText("E-mail");
+        txtMatricula.setPromptText("Matrícula (ex: 2024001)");
+        txtTelefone.setPromptText("Telefone (ex: (11) 99999-9999)");
 
         Button btnSalvar = new Button("Salvar");
         Button btnAtualizar = new Button("Atualizar");
         Button btnExcluir = new Button("Excluir");
+
+        btnSalvar.setOnAction(e -> adicionar());
+        btnAtualizar.setOnAction(e -> atualizar());
+        btnExcluir.setOnAction(e -> remover());
 
         HBox form = new HBox(10,
                 new Label("Nome:"), txtNome,
@@ -44,9 +49,6 @@ public class AlunoView extends VBox {
                 new Label("Matrícula:"), txtMatricula,
                 new Label("Telefone:"), txtTelefone,
                 btnSalvar, btnAtualizar, btnExcluir);
-
-        tabela = new TableView<>();
-        tabela.setItems(obsAlunos);
 
         TableColumn<Aluno, String> colNome = new TableColumn<>("Nome");
         colNome.setCellValueFactory(new PropertyValueFactory<>("nome"));
@@ -64,6 +66,7 @@ public class AlunoView extends VBox {
         colTelefone.setCellValueFactory(new PropertyValueFactory<>("telefone"));
 
         tabela.getColumns().addAll(colNome, colCpf, colEmail, colMatricula, colTelefone);
+        tabela.setItems(dadosTabela);
 
         tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
             if (novo != null) {
@@ -76,80 +79,79 @@ public class AlunoView extends VBox {
             }
         });
 
-        btnSalvar.setOnAction(e -> adicionarAluno());
-        btnAtualizar.setOnAction(e -> atualizarAluno());
-        btnExcluir.setOnAction(e -> removerAluno());
+        carregarTabela();
 
         getChildren().addAll(new Label("Gerenciamento de Alunos (Discentes)"), form, tabela);
     }
 
-    private void adicionarAluno() {
-        try {
-            String nome = txtNome.getText();
-            String cpf = txtCpf.getText();
-            String email = txtEmail.getText();
-            String matricula = txtMatricula.getText();
-            String telefone = txtTelefone.getText();
-
-            if (nome.isEmpty() || cpf.isEmpty() || email.isEmpty() || matricula.isEmpty() || telefone.isEmpty()) {
-                mostrarAlerta("Erro", "Preencha todos os campos.");
-                return;
-            }
-
-            Aluno novo = new Aluno(nome, cpf, email, matricula, telefone);
-            dao.adicionar(novo);
-            listaMemoria.add(novo);
-            obsAlunos.add(novo);
-
-            txtNome.clear(); txtCpf.clear(); txtEmail.clear(); txtMatricula.clear(); txtTelefone.clear();
-        } catch (Exception ex) {
-            mostrarAlerta("Erro", ex.getMessage());
-        }
-    }
-
-    private void atualizarAluno() {
-        if (itemSelecionado == null) {
-            mostrarAlerta("Aviso", "Selecione um aluno na tabela para atualizar.");
-            return;
-        }
-        String nome = txtNome.getText();
-        String cpf = txtCpf.getText();
-        String email = txtEmail.getText();
-        String matricula = txtMatricula.getText();
-        String telefone = txtTelefone.getText();
+    private void adicionar() {
+        String nome = txtNome.getText().trim();
+        String cpf = txtCpf.getText().trim();
+        String email = txtEmail.getText().trim();
+        String matricula = txtMatricula.getText().trim();
+        String telefone = txtTelefone.getText().trim();
 
         if (nome.isEmpty() || cpf.isEmpty() || email.isEmpty() || matricula.isEmpty() || telefone.isEmpty()) {
             mostrarAlerta("Erro", "Preencha todos os campos.");
             return;
         }
 
-        String matriculaOriginal = itemSelecionado.getMatricula();
-        dao.atualizar(matriculaOriginal, new Aluno(nome, cpf, email, matricula, telefone));
-        itemSelecionado.setNome(nome);
-        itemSelecionado.setCpf(cpf);
-        itemSelecionado.setEmail(email);
-        itemSelecionado.setMatricula(matricula);
-        itemSelecionado.setTelefone(telefone);
-        tabela.refresh();
+        dao.adicionar(new Aluno(nome, cpf, email, matricula, telefone));
+        carregarTabela();
+        limparCampos();
+    }
 
-        txtNome.clear(); txtCpf.clear(); txtEmail.clear(); txtMatricula.clear(); txtTelefone.clear();
-        tabela.getSelectionModel().clearSelection();
+    private void atualizar() {
+        if (itemSelecionado == null) {
+            mostrarAlerta("Aviso", "Selecione um aluno na tabela para atualizar.");
+            return;
+        }
+
+        String nome = txtNome.getText().trim();
+        String cpf = txtCpf.getText().trim();
+        String email = txtEmail.getText().trim();
+        String matricula = txtMatricula.getText().trim();
+        String telefone = txtTelefone.getText().trim();
+
+        if (nome.isEmpty() || cpf.isEmpty() || email.isEmpty() || matricula.isEmpty() || telefone.isEmpty()) {
+            mostrarAlerta("Erro", "Preencha todos os campos.");
+            return;
+        }
+
+        dao.atualizar(itemSelecionado.getMatricula(), new Aluno(nome, cpf, email, matricula, telefone));
+        carregarTabela();
+        limparCampos();
+    }
+
+    private void remover() {
+        Aluno selecionado = tabela.getSelectionModel().getSelectedItem();
+        if (selecionado == null) {
+            mostrarAlerta("Aviso", "Selecione um aluno na tabela.");
+            return;
+        }
+
+        dao.remover(selecionado.getMatricula());
+        carregarTabela();
+        limparCampos();
+    }
+
+    private void carregarTabela() {
+        dadosTabela.clear();
+        dadosTabela.addAll(dao.listarTodos());
         itemSelecionado = null;
     }
 
-    private void removerAluno() {
-        Aluno selecionado = tabela.getSelectionModel().getSelectedItem();
-        if (selecionado != null) {
-            dao.remover(selecionado.getMatricula());
-            listaMemoria.remove(selecionado);
-            obsAlunos.remove(selecionado);
-        } else {
-            mostrarAlerta("Aviso", "Selecione um aluno na tabela.");
-        }
+    private void limparCampos() {
+        txtNome.clear();
+        txtCpf.clear();
+        txtEmail.clear();
+        txtMatricula.clear();
+        txtTelefone.clear();
+        tabela.getSelectionModel().clearSelection();
     }
 
     private void mostrarAlerta(String titulo, String mensagem) {
-        Alert alerta = new Alert(Alert.AlertType.ERROR);
+        Alert alerta = new Alert(Alert.AlertType.WARNING);
         alerta.setTitle(titulo);
         alerta.setHeaderText(null);
         alerta.setContentText(mensagem);

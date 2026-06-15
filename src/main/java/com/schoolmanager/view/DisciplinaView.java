@@ -9,33 +9,38 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import java.util.ArrayList;
 
 public class DisciplinaView extends VBox {
-    private TextField txtCodigo, txtNome, txtCargaHoraria, txtEmenta, txtProfessorId;
-    private TableView<Disciplina> tabela;
-    private ObservableList<Disciplina> obsDisciplinas;
-    private ArrayList<Disciplina> listaMemoria;
-    private DisciplinaDAO dao;
+
+    private final DisciplinaDAO dao = new DisciplinaDAO();
+    private final TableView<Disciplina> tabela = new TableView<>();
+    private final ObservableList<Disciplina> dadosTabela = FXCollections.observableArrayList();
+
+    private final TextField txtCodigo = new TextField();
+    private final TextField txtNome = new TextField();
+    private final TextField txtCargaHoraria = new TextField();
+    private final TextField txtEmenta = new TextField();
+    private final TextField txtProfessorId = new TextField();
+
     private Disciplina itemSelecionado;
 
     public DisciplinaView() {
-        dao = new DisciplinaDAO();
-        listaMemoria = dao.listarTodos();
-        obsDisciplinas = FXCollections.observableArrayList(listaMemoria);
-
         setPadding(new Insets(15));
         setSpacing(10);
 
-        txtCodigo = new TextField(); txtCodigo.setPromptText("Código (ex: MAT001)");
-        txtNome = new TextField(); txtNome.setPromptText("Nome da Disciplina");
-        txtCargaHoraria = new TextField(); txtCargaHoraria.setPromptText("Carga Horária (h)");
-        txtEmenta = new TextField(); txtEmenta.setPromptText("Ementa");
-        txtProfessorId = new TextField(); txtProfessorId.setPromptText("CPF do Professor");
+        txtCodigo.setPromptText("Código (ex: MAT001)");
+        txtNome.setPromptText("Nome da Disciplina");
+        txtCargaHoraria.setPromptText("Carga Horária (h)");
+        txtEmenta.setPromptText("Ementa");
+        txtProfessorId.setPromptText("CPF do Professor");
 
         Button btnSalvar = new Button("Salvar");
         Button btnAtualizar = new Button("Atualizar");
         Button btnExcluir = new Button("Excluir");
+
+        btnSalvar.setOnAction(e -> adicionar());
+        btnAtualizar.setOnAction(e -> atualizar());
+        btnExcluir.setOnAction(e -> remover());
 
         HBox form = new HBox(10,
                 new Label("Código:"), txtCodigo,
@@ -44,9 +49,6 @@ public class DisciplinaView extends VBox {
                 new Label("Ementa:"), txtEmenta,
                 new Label("CPF Professor:"), txtProfessorId,
                 btnSalvar, btnAtualizar, btnExcluir);
-
-        tabela = new TableView<>();
-        tabela.setItems(obsDisciplinas);
 
         TableColumn<Disciplina, String> colCodigo = new TableColumn<>("Código");
         colCodigo.setCellValueFactory(new PropertyValueFactory<>("codigo"));
@@ -64,6 +66,7 @@ public class DisciplinaView extends VBox {
         colProfessor.setCellValueFactory(new PropertyValueFactory<>("professorId"));
 
         tabela.getColumns().addAll(colCodigo, colNome, colCarga, colEmenta, colProfessor);
+        tabela.setItems(dadosTabela);
 
         tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
             if (novo != null) {
@@ -76,88 +79,86 @@ public class DisciplinaView extends VBox {
             }
         });
 
-        btnSalvar.setOnAction(e -> adicionarDisciplina());
-        btnAtualizar.setOnAction(e -> atualizarDisciplina());
-        btnExcluir.setOnAction(e -> removerDisciplina());
+        carregarTabela();
 
         getChildren().addAll(new Label("Gerenciamento de Disciplinas"), form, tabela);
     }
 
-    private void adicionarDisciplina() {
+    private void adicionar() {
         try {
-            String codigo = txtCodigo.getText();
-            String nome = txtNome.getText();
-            int cargaHoraria = Integer.parseInt(txtCargaHoraria.getText());
-            String ementa = txtEmenta.getText();
-            String professorId = txtProfessorId.getText();
+            String codigo = txtCodigo.getText().trim();
+            String nome = txtNome.getText().trim();
+            int cargaHoraria = Integer.parseInt(txtCargaHoraria.getText().trim());
+            String ementa = txtEmenta.getText().trim();
+            String professorId = txtProfessorId.getText().trim();
 
             if (codigo.isEmpty() || nome.isEmpty() || ementa.isEmpty() || professorId.isEmpty()) {
                 mostrarAlerta("Erro", "Preencha todos os campos.");
                 return;
             }
 
-            Disciplina nova = new Disciplina(codigo, nome, cargaHoraria, ementa, professorId);
-            dao.adicionar(nova);
-            listaMemoria.add(nova);
-            obsDisciplinas.add(nova);
-
-            txtCodigo.clear(); txtNome.clear(); txtCargaHoraria.clear();
-            txtEmenta.clear(); txtProfessorId.clear();
+            dao.adicionar(new Disciplina(codigo, nome, cargaHoraria, ementa, professorId));
+            carregarTabela();
+            limparCampos();
         } catch (NumberFormatException ex) {
             mostrarAlerta("Erro de Formato", "Carga horária deve ser um número inteiro.");
-        } catch (Exception ex) {
-            mostrarAlerta("Erro", ex.getMessage());
         }
     }
 
-    private void atualizarDisciplina() {
+    private void atualizar() {
         if (itemSelecionado == null) {
             mostrarAlerta("Aviso", "Selecione uma disciplina na tabela para atualizar.");
             return;
         }
         try {
-            String codigo = txtCodigo.getText();
-            String nome = txtNome.getText();
-            int cargaHoraria = Integer.parseInt(txtCargaHoraria.getText());
-            String ementa = txtEmenta.getText();
-            String professorId = txtProfessorId.getText();
+            String codigo = txtCodigo.getText().trim();
+            String nome = txtNome.getText().trim();
+            int cargaHoraria = Integer.parseInt(txtCargaHoraria.getText().trim());
+            String ementa = txtEmenta.getText().trim();
+            String professorId = txtProfessorId.getText().trim();
 
             if (codigo.isEmpty() || nome.isEmpty() || ementa.isEmpty() || professorId.isEmpty()) {
                 mostrarAlerta("Erro", "Preencha todos os campos.");
                 return;
             }
 
-            String codigoOriginal = itemSelecionado.getCodigo();
-            dao.atualizar(codigoOriginal, new Disciplina(codigo, nome, cargaHoraria, ementa, professorId));
-            itemSelecionado.setCodigo(codigo);
-            itemSelecionado.setNome(nome);
-            itemSelecionado.setCargaHoraria(cargaHoraria);
-            itemSelecionado.setEmenta(ementa);
-            itemSelecionado.setProfessorId(professorId);
-            tabela.refresh();
-
-            txtCodigo.clear(); txtNome.clear(); txtCargaHoraria.clear();
-            txtEmenta.clear(); txtProfessorId.clear();
-            tabela.getSelectionModel().clearSelection();
-            itemSelecionado = null;
+            dao.atualizar(itemSelecionado.getCodigo(), new Disciplina(codigo, nome, cargaHoraria, ementa, professorId));
+            carregarTabela();
+            limparCampos();
         } catch (NumberFormatException ex) {
             mostrarAlerta("Erro de Formato", "Carga horária deve ser um número inteiro.");
         }
     }
 
-    private void removerDisciplina() {
+    private void remover() {
         Disciplina selecionada = tabela.getSelectionModel().getSelectedItem();
-        if (selecionada != null) {
-            dao.remover(selecionada.getCodigo());
-            listaMemoria.remove(selecionada);
-            obsDisciplinas.remove(selecionada);
-        } else {
+        if (selecionada == null) {
             mostrarAlerta("Aviso", "Selecione uma disciplina na tabela.");
+            return;
         }
+
+        dao.remover(selecionada.getCodigo());
+        carregarTabela();
+        limparCampos();
+    }
+
+    private void carregarTabela() {
+        dadosTabela.clear();
+        dadosTabela.addAll(dao.listarTodos());
+        itemSelecionado = null;
+    }
+
+    private void limparCampos() {
+        txtCodigo.clear();
+        txtNome.clear();
+        txtCargaHoraria.clear();
+        txtEmenta.clear();
+        txtProfessorId.clear();
+        tabela.getSelectionModel().clearSelection();
     }
 
     private void mostrarAlerta(String titulo, String mensagem) {
-        Alert alerta = new Alert(Alert.AlertType.ERROR);
+        Alert alerta = new Alert(Alert.AlertType.WARNING);
         alerta.setTitle(titulo);
         alerta.setHeaderText(null);
         alerta.setContentText(mensagem);

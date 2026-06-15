@@ -10,7 +10,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-public class MatriculaView {
+public class MatriculaView extends VBox {
+
     private final MatriculaDAO dao = new MatriculaDAO();
     private final TableView<Matricula> tabela = new TableView<>();
     private final ObservableList<Matricula> dadosTabela = FXCollections.observableArrayList();
@@ -18,26 +19,30 @@ public class MatriculaView {
     private final TextField txtData = new TextField();
     private final TextField txtAlunoId = new TextField();
     private final TextField txtTurmaId = new TextField();
+
     private Matricula itemSelecionado;
 
-    public VBox iniciarTela() {
-        VBox painel = new VBox(10);
-        painel.setPadding(new Insets(15));
+    public MatriculaView() {
+        setPadding(new Insets(15));
+        setSpacing(10);
 
         txtData.setPromptText("DD/MM/AAAA");
         txtAlunoId.setPromptText("CPF do Aluno");
         txtTurmaId.setPromptText("Código da Turma");
 
         Button btnSalvar = new Button("Salvar");
-        btnSalvar.setOnAction(e -> executarCadastro());
-
         Button btnAtualizar = new Button("Atualizar");
-        btnAtualizar.setOnAction(e -> executarAtualizacao());
-
         Button btnExcluir = new Button("Excluir");
-        btnExcluir.setOnAction(e -> executarExclusao());
 
-        HBox form = new HBox(10, txtData, txtAlunoId, txtTurmaId, btnSalvar, btnAtualizar, btnExcluir);
+        btnSalvar.setOnAction(e -> adicionar());
+        btnAtualizar.setOnAction(e -> atualizar());
+        btnExcluir.setOnAction(e -> remover());
+
+        HBox form = new HBox(10,
+                new Label("Data:"), txtData,
+                new Label("CPF Aluno:"), txtAlunoId,
+                new Label("Código Turma:"), txtTurmaId,
+                btnSalvar, btnAtualizar, btnExcluir);
 
         TableColumn<Matricula, String> colData = new TableColumn<>("Data Matrícula");
         colData.setCellValueFactory(new PropertyValueFactory<>("dataMatricula"));
@@ -62,11 +67,10 @@ public class MatriculaView {
 
         carregarTabela();
 
-        painel.getChildren().addAll(new Label("Gestão de Matrículas"), form, tabela);
-        return painel;
+        getChildren().addAll(new Label("Gestão de Matrículas"), form, tabela);
     }
 
-    private void executarCadastro() {
+    private void adicionar() {
         String data = txtData.getText().trim();
         String alunoId = txtAlunoId.getText().trim();
         String turmaId = txtTurmaId.getText().trim();
@@ -82,15 +86,16 @@ public class MatriculaView {
         }
 
         dao.adicionar(new Matricula(data, alunoId, turmaId));
-        txtData.clear(); txtAlunoId.clear(); txtTurmaId.clear();
         carregarTabela();
+        limparCampos();
     }
 
-    private void executarAtualizacao() {
+    private void atualizar() {
         if (itemSelecionado == null) {
             mostrarAlerta("Aviso", "Selecione uma matrícula na tabela para atualizar.");
             return;
         }
+
         String data = txtData.getText().trim();
         String alunoId = txtAlunoId.getText().trim();
         String turmaId = txtTurmaId.getText().trim();
@@ -105,35 +110,42 @@ public class MatriculaView {
             return;
         }
 
-        String alunoIdOriginal = itemSelecionado.getAlunoId();
-        String turmaIdOriginal = itemSelecionado.getTurmaId();
-        dao.atualizar(alunoIdOriginal, turmaIdOriginal, new Matricula(data, alunoId, turmaId));
-        txtData.clear(); txtAlunoId.clear(); txtTurmaId.clear();
-        tabela.getSelectionModel().clearSelection();
-        itemSelecionado = null;
+        dao.atualizar(itemSelecionado.getAlunoId(), itemSelecionado.getTurmaId(),
+                new Matricula(data, alunoId, turmaId));
         carregarTabela();
+        limparCampos();
     }
 
-    private void executarExclusao() {
+    private void remover() {
         Matricula selecionada = tabela.getSelectionModel().getSelectedItem();
         if (selecionada == null) {
             mostrarAlerta("Aviso", "Selecione uma matrícula para excluir.");
             return;
         }
+
         dao.remover(selecionada.getAlunoId(), selecionada.getTurmaId());
         carregarTabela();
+        limparCampos();
     }
 
     private void carregarTabela() {
         dadosTabela.clear();
         dadosTabela.addAll(dao.listarTodos());
+        itemSelecionado = null;
+    }
+
+    private void limparCampos() {
+        txtData.clear();
+        txtAlunoId.clear();
+        txtTurmaId.clear();
+        tabela.getSelectionModel().clearSelection();
     }
 
     private void mostrarAlerta(String titulo, String mensagem) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle(titulo);
-        alert.setHeaderText(null);
-        alert.setContentText(mensagem);
-        alert.showAndWait();
+        Alert alerta = new Alert(Alert.AlertType.WARNING);
+        alerta.setTitle(titulo);
+        alerta.setHeaderText(null);
+        alerta.setContentText(mensagem);
+        alerta.showAndWait();
     }
 }

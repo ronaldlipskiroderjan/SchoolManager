@@ -9,41 +9,39 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import java.util.ArrayList;
 
 public class FrequenciaView extends VBox {
-    private TextField txtData, txtMatricula;
-    private CheckBox chkPresente;
-    private TableView<Frequencia> tabela;
-    private ObservableList<Frequencia> obsFrequencia;
-    private ArrayList<Frequencia> listaMemoria;
-    private FrequenciaDAO dao;
+
+    private final FrequenciaDAO dao = new FrequenciaDAO();
+    private final TableView<Frequencia> tabela = new TableView<>();
+    private final ObservableList<Frequencia> dadosTabela = FXCollections.observableArrayList();
+
+    private final TextField txtData = new TextField();
+    private final CheckBox chkPresente = new CheckBox("Presente?");
+    private final TextField txtMatricula = new TextField();
+
     private Frequencia itemSelecionado;
 
     public FrequenciaView() {
-        dao = new FrequenciaDAO();
-        listaMemoria = dao.listarTodos();
-        obsFrequencia = FXCollections.observableArrayList(listaMemoria);
-
         setPadding(new Insets(15));
         setSpacing(10);
 
-        txtData = new TextField(); txtData.setPromptText("DD/MM/AAAA");
-        chkPresente = new CheckBox("Presente?");
-        txtMatricula = new TextField(); txtMatricula.setPromptText("ID Matrícula");
+        txtData.setPromptText("DD/MM/AAAA");
+        txtMatricula.setPromptText("ID Matrícula");
 
         Button btnSalvar = new Button("Salvar");
         Button btnAtualizar = new Button("Atualizar");
         Button btnExcluir = new Button("Excluir");
+
+        btnSalvar.setOnAction(e -> adicionar());
+        btnAtualizar.setOnAction(e -> atualizar());
+        btnExcluir.setOnAction(e -> remover());
 
         HBox form = new HBox(10,
                 new Label("Data:"), txtData,
                 chkPresente,
                 new Label("Matrícula:"), txtMatricula,
                 btnSalvar, btnAtualizar, btnExcluir);
-
-        tabela = new TableView<>();
-        tabela.setItems(obsFrequencia);
 
         TableColumn<Frequencia, String> colData = new TableColumn<>("Data");
         colData.setCellValueFactory(new PropertyValueFactory<>("dataAula"));
@@ -54,7 +52,10 @@ public class FrequenciaView extends VBox {
         TableColumn<Frequencia, String> colMatricula = new TableColumn<>("Matrícula");
         colMatricula.setCellValueFactory(new PropertyValueFactory<>("matriculaId"));
 
-        tabela.getColumns().addAll(colData, colStatus, colMatricula);
+        tabela.getColumns().add(colData);
+        tabela.getColumns().add(colStatus);
+        tabela.getColumns().add(colMatricula);
+        tabela.setItems(dadosTabela);
 
         tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
             if (novo != null) {
@@ -65,46 +66,12 @@ public class FrequenciaView extends VBox {
             }
         });
 
-        btnSalvar.setOnAction(e -> adicionarFrequencia());
-        btnAtualizar.setOnAction(e -> atualizarFrequencia());
-        btnExcluir.setOnAction(e -> removerFrequencia());
+        carregarTabela();
 
         getChildren().addAll(new Label("Registro de Frequência"), form, tabela);
     }
 
-    private void adicionarFrequencia() {
-        try {
-            String data = txtData.getText().trim();
-            String matricula = txtMatricula.getText().trim();
-            boolean presente = chkPresente.isSelected();
-
-            if (data.isEmpty() || matricula.isEmpty()) {
-                mostrarAlerta("Validação", "Preencha todos os campos obrigatórios.");
-                return;
-            }
-
-            if (!data.matches("\\d{2}/\\d{2}/\\d{4}")) {
-                mostrarAlerta("Formatação", "A data deve seguir o padrão DD/MM/AAAA.");
-                return;
-            }
-
-            Frequencia nova = new Frequencia(data, presente, matricula);
-            dao.adicionar(nova);
-            listaMemoria.add(nova);
-            obsFrequencia.add(nova);
-
-            txtData.clear(); txtMatricula.clear(); chkPresente.setSelected(false);
-
-        } catch (Exception ex) {
-            mostrarAlerta("Erro", ex.getMessage() != null ? ex.getMessage() : "Erro inesperado.");
-        }
-    }
-
-    private void atualizarFrequencia() {
-        if (itemSelecionado == null) {
-            mostrarAlerta("Aviso", "Selecione um registro de frequência para atualizar.");
-            return;
-        }
+    private void adicionar() {
         String data = txtData.getText().trim();
         String matricula = txtMatricula.getText().trim();
         boolean presente = chkPresente.isSelected();
@@ -119,28 +86,60 @@ public class FrequenciaView extends VBox {
             return;
         }
 
-        String matriculaIdOriginal = itemSelecionado.getMatriculaId();
-        String dataAulaOriginal = itemSelecionado.getDataAula();
-        dao.atualizar(matriculaIdOriginal, dataAulaOriginal, new Frequencia(data, presente, matricula));
-        itemSelecionado.setDataAula(data);
-        itemSelecionado.setPresente(presente);
-        itemSelecionado.setMatriculaId(matricula);
-        tabela.refresh();
-
-        txtData.clear(); txtMatricula.clear(); chkPresente.setSelected(false);
-        tabela.getSelectionModel().clearSelection();
-        itemSelecionado = null;
+        dao.adicionar(new Frequencia(data, presente, matricula));
+        carregarTabela();
+        limparCampos();
     }
 
-    private void removerFrequencia() {
+    private void atualizar() {
+        if (itemSelecionado == null) {
+            mostrarAlerta("Aviso", "Selecione um registro de frequência para atualizar.");
+            return;
+        }
+
+        String data = txtData.getText().trim();
+        String matricula = txtMatricula.getText().trim();
+        boolean presente = chkPresente.isSelected();
+
+        if (data.isEmpty() || matricula.isEmpty()) {
+            mostrarAlerta("Validação", "Preencha todos os campos obrigatórios.");
+            return;
+        }
+
+        if (!data.matches("\\d{2}/\\d{2}/\\d{4}")) {
+            mostrarAlerta("Formatação", "A data deve seguir o padrão DD/MM/AAAA.");
+            return;
+        }
+
+        dao.atualizar(itemSelecionado.getMatriculaId(), itemSelecionado.getDataAula(),
+                new Frequencia(data, presente, matricula));
+        carregarTabela();
+        limparCampos();
+    }
+
+    private void remover() {
         Frequencia selecionada = tabela.getSelectionModel().getSelectedItem();
         if (selecionada == null) {
             mostrarAlerta("Aviso", "Selecione um registro de frequência para excluir.");
             return;
         }
+
         dao.remover(selecionada.getMatriculaId(), selecionada.getDataAula());
-        listaMemoria.remove(selecionada);
-        obsFrequencia.remove(selecionada);
+        carregarTabela();
+        limparCampos();
+    }
+
+    private void carregarTabela() {
+        dadosTabela.clear();
+        dadosTabela.addAll(dao.listarTodos());
+        itemSelecionado = null;
+    }
+
+    private void limparCampos() {
+        txtData.clear();
+        chkPresente.setSelected(false);
+        txtMatricula.clear();
+        tabela.getSelectionModel().clearSelection();
     }
 
     private void mostrarAlerta(String titulo, String mensagem) {

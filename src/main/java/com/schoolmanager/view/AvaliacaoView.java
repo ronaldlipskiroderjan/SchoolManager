@@ -9,40 +9,40 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import java.util.ArrayList;
 
 public class AvaliacaoView extends VBox {
-    private TextField txtNota, txtTipo, txtMatricula;
-    private TableView<Avaliacao> tabela;
-    private ObservableList<Avaliacao> obsAvaliacoes;
-    private ArrayList<Avaliacao> listaMemoria;
-    private AvaliacaoDAO dao;
+
+    private final AvaliacaoDAO dao = new AvaliacaoDAO();
+    private final TableView<Avaliacao> tabela = new TableView<>();
+    private final ObservableList<Avaliacao> dadosTabela = FXCollections.observableArrayList();
+
+    private final TextField txtNota = new TextField();
+    private final TextField txtTipo = new TextField();
+    private final TextField txtMatricula = new TextField();
+
     private Avaliacao itemSelecionado;
 
     public AvaliacaoView() {
-        dao = new AvaliacaoDAO();
-        listaMemoria = dao.listarTodos();
-        obsAvaliacoes = FXCollections.observableArrayList(listaMemoria);
-
         setPadding(new Insets(15));
         setSpacing(10);
 
-        txtNota = new TextField(); txtNota.setPromptText("Nota (ex: 8.5)");
-        txtTipo = new TextField(); txtTipo.setPromptText("Tipo (ex: Prova 1)");
-        txtMatricula = new TextField(); txtMatricula.setPromptText("ID Matrícula");
+        txtNota.setPromptText("Nota (ex: 8.5)");
+        txtTipo.setPromptText("Tipo (ex: Prova 1)");
+        txtMatricula.setPromptText("ID Matrícula");
 
         Button btnSalvar = new Button("Salvar");
         Button btnAtualizar = new Button("Atualizar");
         Button btnExcluir = new Button("Excluir");
+
+        btnSalvar.setOnAction(e -> adicionar());
+        btnAtualizar.setOnAction(e -> atualizar());
+        btnExcluir.setOnAction(e -> remover());
 
         HBox form = new HBox(10,
                 new Label("Nota:"), txtNota,
                 new Label("Tipo:"), txtTipo,
                 new Label("Matrícula:"), txtMatricula,
                 btnSalvar, btnAtualizar, btnExcluir);
-
-        tabela = new TableView<>();
-        tabela.setItems(obsAvaliacoes);
 
         TableColumn<Avaliacao, Double> colNota = new TableColumn<>("Nota");
         colNota.setCellValueFactory(new PropertyValueFactory<>("valorNota"));
@@ -54,6 +54,7 @@ public class AvaliacaoView extends VBox {
         colMatricula.setCellValueFactory(new PropertyValueFactory<>("matriculaId"));
 
         tabela.getColumns().addAll(colNota, colTipo, colMatricula);
+        tabela.setItems(dadosTabela);
 
         tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
             if (novo != null) {
@@ -64,14 +65,12 @@ public class AvaliacaoView extends VBox {
             }
         });
 
-        btnSalvar.setOnAction(e -> adicionarAvaliacao());
-        btnAtualizar.setOnAction(e -> atualizarAvaliacao());
-        btnExcluir.setOnAction(e -> removerAvaliacao());
+        carregarTabela();
 
         getChildren().addAll(new Label("Gerenciamento de Avaliações"), form, tabela);
     }
 
-    private void adicionarAvaliacao() {
+    private void adicionar() {
         try {
             String notaStr = txtNota.getText().trim();
             String tipo = txtTipo.getText().trim();
@@ -83,27 +82,20 @@ public class AvaliacaoView extends VBox {
             }
 
             double nota = Double.parseDouble(notaStr.replace(",", "."));
-
             if (nota < 0 || nota > 10) {
                 mostrarAlerta("Regra de Negócio", "A nota deve estar entre 0 e 10.");
                 return;
             }
 
-            Avaliacao nova = new Avaliacao(nota, tipo, matricula);
-            dao.adicionar(nova);
-            listaMemoria.add(nova);
-            obsAvaliacoes.add(nova);
-
-            txtNota.clear(); txtTipo.clear(); txtMatricula.clear();
-
+            dao.adicionar(new Avaliacao(nota, tipo, matricula));
+            carregarTabela();
+            limparCampos();
         } catch (NumberFormatException ex) {
             mostrarAlerta("Erro de Formato", "A nota deve ser um número válido (ex: 8.5).");
-        } catch (Exception ex) {
-            mostrarAlerta("Erro", ex.getMessage() != null ? ex.getMessage() : "Erro inesperado.");
         }
     }
 
-    private void atualizarAvaliacao() {
+    private void atualizar() {
         if (itemSelecionado == null) {
             mostrarAlerta("Aviso", "Selecione uma avaliação na tabela para atualizar.");
             return;
@@ -124,31 +116,38 @@ public class AvaliacaoView extends VBox {
                 return;
             }
 
-            String matriculaIdOriginal = itemSelecionado.getMatriculaId();
-            String tipoOriginal = itemSelecionado.getTipo();
-            dao.atualizar(matriculaIdOriginal, tipoOriginal, new Avaliacao(nota, tipo, matricula));
-            itemSelecionado.setValorNota(nota);
-            itemSelecionado.setTipo(tipo);
-            itemSelecionado.setMatriculaId(matricula);
-            tabela.refresh();
-
-            txtNota.clear(); txtTipo.clear(); txtMatricula.clear();
-            tabela.getSelectionModel().clearSelection();
-            itemSelecionado = null;
+            dao.atualizar(itemSelecionado.getMatriculaId(), itemSelecionado.getTipo(),
+                    new Avaliacao(nota, tipo, matricula));
+            carregarTabela();
+            limparCampos();
         } catch (NumberFormatException ex) {
             mostrarAlerta("Erro de Formato", "A nota deve ser um número válido (ex: 8.5).");
         }
     }
 
-    private void removerAvaliacao() {
+    private void remover() {
         Avaliacao selecionada = tabela.getSelectionModel().getSelectedItem();
         if (selecionada == null) {
-            mostrarAlerta("Aviso", "Selecione uma avaliação na tabela para excluir.");
+            mostrarAlerta("Aviso", "Selecione uma avaliação na tabela.");
             return;
         }
+
         dao.remover(selecionada.getMatriculaId(), selecionada.getTipo());
-        listaMemoria.remove(selecionada);
-        obsAvaliacoes.remove(selecionada);
+        carregarTabela();
+        limparCampos();
+    }
+
+    private void carregarTabela() {
+        dadosTabela.clear();
+        dadosTabela.addAll(dao.listarTodos());
+        itemSelecionado = null;
+    }
+
+    private void limparCampos() {
+        txtNota.clear();
+        txtTipo.clear();
+        txtMatricula.clear();
+        tabela.getSelectionModel().clearSelection();
     }
 
     private void mostrarAlerta(String titulo, String mensagem) {

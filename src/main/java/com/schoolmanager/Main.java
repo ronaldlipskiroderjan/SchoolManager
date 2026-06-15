@@ -54,12 +54,12 @@ public class Main extends Application {
         btnProfessores.setOnAction(e -> painelPrincipal.setCenter(new ProfessorView()));
         btnDisciplinas.setOnAction(e -> painelPrincipal.setCenter(new DisciplinaView()));
         btnResponsaveis.setOnAction(e -> painelPrincipal.setCenter(new ResponsavelView()));
-        btnCursos.setOnAction(e -> painelPrincipal.setCenter(new CursoView().iniciarTela()));
-        btnTurmas.setOnAction(e -> painelPrincipal.setCenter(new TurmaView().iniciarTela()));
+        btnCursos.setOnAction(e -> painelPrincipal.setCenter(new CursoView()));
+        btnTurmas.setOnAction(e -> painelPrincipal.setCenter(new TurmaView()));
         btnAvaliacoes.setOnAction(e -> painelPrincipal.setCenter(new AvaliacaoView()));
         btnFrequencias.setOnAction(e -> painelPrincipal.setCenter(new FrequenciaView()));
-        btnSalas.setOnAction(e -> painelPrincipal.setCenter(new SalaView().iniciarTela()));
-        btnMatriculas.setOnAction(e -> painelPrincipal.setCenter(new MatriculaView().iniciarTela()));
+        btnSalas.setOnAction(e -> painelPrincipal.setCenter(new SalaView()));
+        btnMatriculas.setOnAction(e -> painelPrincipal.setCenter(new MatriculaView()));
 
         menuLateral.getChildren().addAll(
                 tituloMenu,
