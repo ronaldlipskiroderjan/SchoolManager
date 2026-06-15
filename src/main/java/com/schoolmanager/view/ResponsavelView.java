@@ -97,9 +97,9 @@ public class ResponsavelView extends VBox {
             }
 
             Responsavel novo = new Responsavel(nome, cpf, email, telefone, alunoMatricula);
+            dao.adicionar(novo);
             listaMemoria.add(novo);
             obsResponsaveis.add(novo);
-            dao.salvarTodos(listaMemoria);
 
             txtNome.clear(); txtCpf.clear(); txtEmail.clear(); txtTelefone.clear(); txtAlunoMatricula.clear();
         } catch (Exception ex) {
@@ -123,12 +123,13 @@ public class ResponsavelView extends VBox {
             return;
         }
 
+        String cpfOriginal = itemSelecionado.getCpf();
+        dao.atualizar(cpfOriginal, new Responsavel(nome, cpf, email, telefone, alunoMatricula));
         itemSelecionado.setNome(nome);
         itemSelecionado.setCpf(cpf);
         itemSelecionado.setEmail(email);
         itemSelecionado.setTelefone(telefone);
         itemSelecionado.setAlunoMatricula(alunoMatricula);
-        dao.salvarTodos(listaMemoria);
         tabela.refresh();
 
         txtNome.clear(); txtCpf.clear(); txtEmail.clear(); txtTelefone.clear(); txtAlunoMatricula.clear();
@@ -139,9 +140,9 @@ public class ResponsavelView extends VBox {
     private void removerResponsavel() {
         Responsavel selecionado = tabela.getSelectionModel().getSelectedItem();
         if (selecionado != null) {
+            dao.remover(selecionado.getCpf());
             listaMemoria.remove(selecionado);
             obsResponsaveis.remove(selecionado);
-            dao.salvarTodos(listaMemoria);
         } else {
             mostrarAlerta("Aviso", "Selecione um responsável na tabela.");
         }

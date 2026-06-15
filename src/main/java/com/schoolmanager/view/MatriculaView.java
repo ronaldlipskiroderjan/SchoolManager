@@ -9,7 +9,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import java.util.ArrayList;
 
 public class MatriculaView {
     private final MatriculaDAO dao = new MatriculaDAO();
@@ -106,15 +105,13 @@ public class MatriculaView {
             return;
         }
 
-        itemSelecionado.setDataMatricula(data);
-        itemSelecionado.setAlunoId(alunoId);
-        itemSelecionado.setTurmaId(turmaId);
-        dao.salvarLista(new ArrayList<>(dadosTabela));
-        tabela.refresh();
-
+        String alunoIdOriginal = itemSelecionado.getAlunoId();
+        String turmaIdOriginal = itemSelecionado.getTurmaId();
+        dao.atualizar(alunoIdOriginal, turmaIdOriginal, new Matricula(data, alunoId, turmaId));
         txtData.clear(); txtAlunoId.clear(); txtTurmaId.clear();
         tabela.getSelectionModel().clearSelection();
         itemSelecionado = null;
+        carregarTabela();
     }
 
     private void executarExclusao() {
@@ -123,8 +120,7 @@ public class MatriculaView {
             mostrarAlerta("Aviso", "Selecione uma matrícula para excluir.");
             return;
         }
-        dadosTabela.remove(selecionada);
-        dao.salvarLista(new ArrayList<>(dadosTabela));
+        dao.remover(selecionada.getAlunoId(), selecionada.getTurmaId());
         carregarTabela();
     }
 

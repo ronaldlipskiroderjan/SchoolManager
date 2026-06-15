@@ -21,7 +21,7 @@ public class AvaliacaoView extends VBox {
 
     public AvaliacaoView() {
         dao = new AvaliacaoDAO();
-        listaMemoria = dao.carregarDados();
+        listaMemoria = dao.listarTodos();
         obsAvaliacoes = FXCollections.observableArrayList(listaMemoria);
 
         setPadding(new Insets(15));
@@ -90,9 +90,9 @@ public class AvaliacaoView extends VBox {
             }
 
             Avaliacao nova = new Avaliacao(nota, tipo, matricula);
+            dao.adicionar(nova);
             listaMemoria.add(nova);
             obsAvaliacoes.add(nova);
-            dao.salvarDados(listaMemoria);
 
             txtNota.clear(); txtTipo.clear(); txtMatricula.clear();
 
@@ -124,10 +124,12 @@ public class AvaliacaoView extends VBox {
                 return;
             }
 
+            String matriculaIdOriginal = itemSelecionado.getMatriculaId();
+            String tipoOriginal = itemSelecionado.getTipo();
+            dao.atualizar(matriculaIdOriginal, tipoOriginal, new Avaliacao(nota, tipo, matricula));
             itemSelecionado.setValorNota(nota);
             itemSelecionado.setTipo(tipo);
             itemSelecionado.setMatriculaId(matricula);
-            dao.salvarDados(listaMemoria);
             tabela.refresh();
 
             txtNota.clear(); txtTipo.clear(); txtMatricula.clear();
@@ -144,9 +146,9 @@ public class AvaliacaoView extends VBox {
             mostrarAlerta("Aviso", "Selecione uma avaliação na tabela para excluir.");
             return;
         }
+        dao.remover(selecionada.getMatriculaId(), selecionada.getTipo());
         listaMemoria.remove(selecionada);
         obsAvaliacoes.remove(selecionada);
-        dao.salvarDados(listaMemoria);
     }
 
     private void mostrarAlerta(String titulo, String mensagem) {

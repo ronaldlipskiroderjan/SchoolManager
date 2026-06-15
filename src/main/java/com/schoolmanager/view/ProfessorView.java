@@ -97,9 +97,9 @@ public class ProfessorView extends VBox {
             }
 
             Professor novo = new Professor(nome, cpf, email, titulacao, especialidade);
+            dao.adicionar(novo);
             listaMemoria.add(novo);
             obsProfessores.add(novo);
-            dao.salvarTodos(listaMemoria);
 
             txtNome.clear(); txtCpf.clear(); txtEmail.clear(); txtTitulacao.clear(); txtEspecialidade.clear();
         } catch (Exception ex) {
@@ -123,12 +123,13 @@ public class ProfessorView extends VBox {
             return;
         }
 
+        String cpfOriginal = itemSelecionado.getCpf();
+        dao.atualizar(cpfOriginal, new Professor(nome, cpf, email, titulacao, especialidade));
         itemSelecionado.setNome(nome);
         itemSelecionado.setCpf(cpf);
         itemSelecionado.setEmail(email);
         itemSelecionado.setTitulacao(titulacao);
         itemSelecionado.setEspecialidade(especialidade);
-        dao.salvarTodos(listaMemoria);
         tabela.refresh();
 
         txtNome.clear(); txtCpf.clear(); txtEmail.clear(); txtTitulacao.clear(); txtEspecialidade.clear();
@@ -139,9 +140,9 @@ public class ProfessorView extends VBox {
     private void removerProfessor() {
         Professor selecionado = tabela.getSelectionModel().getSelectedItem();
         if (selecionado != null) {
+            dao.remover(selecionado.getCpf());
             listaMemoria.remove(selecionado);
             obsProfessores.remove(selecionado);
-            dao.salvarTodos(listaMemoria);
         } else {
             mostrarAlerta("Aviso", "Selecione um professor na tabela.");
         }

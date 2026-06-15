@@ -9,7 +9,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import java.util.ArrayList;
 
 public class TurmaView {
     private TurmaDAO dao = new TurmaDAO();
@@ -97,15 +96,12 @@ public class TurmaView {
             return;
         }
 
-        itemSelecionado.setCodigo(codigo);
-        itemSelecionado.setSemestre(semestre);
-        itemSelecionado.setDisciplinaId(disciplinaId);
-        dao.salvarTodos(new ArrayList<>(dadosTabela));
-        tabela.refresh();
-
+        String codigoOriginal = itemSelecionado.getCodigo();
+        dao.atualizar(codigoOriginal, new Turma(codigo, semestre, disciplinaId));
         txtCodigo.clear(); txtSemestre.clear(); txtDisciplinaId.clear();
         tabela.getSelectionModel().clearSelection();
         itemSelecionado = null;
+        carregarTabela();
     }
 
     private void carregarTabela() {
@@ -116,8 +112,7 @@ public class TurmaView {
     private void excluirRegistro() {
         Turma selecionada = tabela.getSelectionModel().getSelectedItem();
         if (selecionada != null) {
-            dadosTabela.remove(selecionada);
-            dao.salvarTodos(new ArrayList<>(dadosTabela));
+            dao.remover(selecionada.getCodigo());
             carregarTabela();
         } else {
             mostrarAlerta("Aviso", "Selecione uma turma na tabela.");

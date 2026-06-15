@@ -22,7 +22,7 @@ public class FrequenciaView extends VBox {
 
     public FrequenciaView() {
         dao = new FrequenciaDAO();
-        listaMemoria = dao.carregarDados();
+        listaMemoria = dao.listarTodos();
         obsFrequencia = FXCollections.observableArrayList(listaMemoria);
 
         setPadding(new Insets(15));
@@ -89,9 +89,9 @@ public class FrequenciaView extends VBox {
             }
 
             Frequencia nova = new Frequencia(data, presente, matricula);
+            dao.adicionar(nova);
             listaMemoria.add(nova);
             obsFrequencia.add(nova);
-            dao.salvarDados(listaMemoria);
 
             txtData.clear(); txtMatricula.clear(); chkPresente.setSelected(false);
 
@@ -119,10 +119,12 @@ public class FrequenciaView extends VBox {
             return;
         }
 
+        String matriculaIdOriginal = itemSelecionado.getMatriculaId();
+        String dataAulaOriginal = itemSelecionado.getDataAula();
+        dao.atualizar(matriculaIdOriginal, dataAulaOriginal, new Frequencia(data, presente, matricula));
         itemSelecionado.setDataAula(data);
         itemSelecionado.setPresente(presente);
         itemSelecionado.setMatriculaId(matricula);
-        dao.salvarDados(listaMemoria);
         tabela.refresh();
 
         txtData.clear(); txtMatricula.clear(); chkPresente.setSelected(false);
@@ -136,9 +138,9 @@ public class FrequenciaView extends VBox {
             mostrarAlerta("Aviso", "Selecione um registro de frequência para excluir.");
             return;
         }
+        dao.remover(selecionada.getMatriculaId(), selecionada.getDataAula());
         listaMemoria.remove(selecionada);
         obsFrequencia.remove(selecionada);
-        dao.salvarDados(listaMemoria);
     }
 
     private void mostrarAlerta(String titulo, String mensagem) {

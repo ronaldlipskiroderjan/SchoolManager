@@ -97,9 +97,9 @@ public class AlunoView extends VBox {
             }
 
             Aluno novo = new Aluno(nome, cpf, email, matricula, telefone);
+            dao.adicionar(novo);
             listaMemoria.add(novo);
             obsAlunos.add(novo);
-            dao.salvarTodos(listaMemoria);
 
             txtNome.clear(); txtCpf.clear(); txtEmail.clear(); txtMatricula.clear(); txtTelefone.clear();
         } catch (Exception ex) {
@@ -123,12 +123,13 @@ public class AlunoView extends VBox {
             return;
         }
 
+        String matriculaOriginal = itemSelecionado.getMatricula();
+        dao.atualizar(matriculaOriginal, new Aluno(nome, cpf, email, matricula, telefone));
         itemSelecionado.setNome(nome);
         itemSelecionado.setCpf(cpf);
         itemSelecionado.setEmail(email);
         itemSelecionado.setMatricula(matricula);
         itemSelecionado.setTelefone(telefone);
-        dao.salvarTodos(listaMemoria);
         tabela.refresh();
 
         txtNome.clear(); txtCpf.clear(); txtEmail.clear(); txtMatricula.clear(); txtTelefone.clear();
@@ -139,9 +140,9 @@ public class AlunoView extends VBox {
     private void removerAluno() {
         Aluno selecionado = tabela.getSelectionModel().getSelectedItem();
         if (selecionado != null) {
+            dao.remover(selecionado.getMatricula());
             listaMemoria.remove(selecionado);
             obsAlunos.remove(selecionado);
-            dao.salvarTodos(listaMemoria);
         } else {
             mostrarAlerta("Aviso", "Selecione um aluno na tabela.");
         }

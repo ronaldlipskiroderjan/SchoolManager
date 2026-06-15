@@ -25,6 +25,10 @@ public class Sala implements Serializable {
 
     @Override
     public String toString() {
-        return "Sala: " + numero + " - Bloco: " + bloco + " (Capacidade: " + capacidade + ")";
+        return "Sala{" +
+                "numero='" + numero + '\'' +
+                ", bloco='" + bloco + '\'' +
+                ", capacidade=" + capacidade +
+                '}';
     }
 }
